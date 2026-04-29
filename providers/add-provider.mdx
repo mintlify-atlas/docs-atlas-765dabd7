@@ -1,0 +1,340 @@
+---
+title: "How to add and configure API providers in CC Switch"
+description: "Use presets, custom JSON/TOML, or Universal Providers to register a provider, covering advanced options and the Codex OAuth reverse proxy."
+---
+
+Adding a provider tells CC Switch how to connect a particular CLI tool to an AI backend. Each provider stores an API key, a base URL, optional model overrides, and metadata. Providers are kept in a local SQLite database and are written to the tool's config file only when you activate them.
+
+## Open the Add Provider panel
+
+Click the **+** button in the top-right corner of the main interface. The panel has two tabs:
+
+- **App-specific Provider** — scoped to whichever app tab (Claude / Codex / Gemini / OpenCode / OpenClaw) is currently selected
+- **Universal Provider** — one entry that syncs to multiple apps simultaneously
+
+---
+
+## Method 1: Add using a preset
+
+Presets are pre-configured templates that only require an API key. The provider name and endpoint are filled in automatically.
+
+<Steps>
+  <Step title="Select a preset">
+    Choose a provider from the **Preset** dropdown. The list is grouped by category (official, aggregator, third-party, etc.).
+  </Step>
+  <Step title="Enter your API key">
+    Paste your API key into the **API Key** field. For presets that use `ANTHROPIC_AUTH_TOKEN`, the field is labeled accordingly; a few providers (such as AiHubMix) use `ANTHROPIC_API_KEY` instead.
+  </Step>
+  <Step title="Optionally fetch available models">
+    Click the **Fetch Models** button (download icon) next to the model field. CC Switch calls the provider's `/v1/models` endpoint and presents a grouped dropdown. This works for all five apps as long as the provider exposes an OpenAI-compatible models endpoint.
+
+    <Note>
+      If the provider returns a 401/403, check your API key. A 404/405 means the provider does not expose `/v1/models` — enter the model ID manually in that case.
+    </Note>
+  </Step>
+  <Step title="Add optional metadata">
+    Fill in **Notes** (account purpose, plan, expiry date), a **Website Link**, or pick a custom **Icon** and color. Notes appear on the provider card and are searchable.
+  </Step>
+  <Step title="Click Add">
+    The provider is saved to the local database. It is not written to the CLI config file until you activate it.
+  </Step>
+</Steps>
+
+### Available presets by app
+
+<Tabs>
+  <Tab title="Claude Code">
+    | Preset | Endpoint (base URL) |
+    |--------|---------------------|
+    | Claude Official | Official login (no endpoint) |
+    | DeepSeek | `https://api.deepseek.com/anthropic` |
+    | Zhipu GLM | `https://open.bigmodel.cn/api/anthropic` |
+    | Zhipu GLM en | `https://api.z.ai/api/anthropic` |
+    | Bailian | `https://dashscope.aliyuncs.com/apps/anthropic` |
+    | Kimi | `https://api.moonshot.cn/anthropic` |
+    | Kimi For Coding | `https://api.kimi.com/coding/` |
+    | StepFun | `https://api.stepfun.com/step_plan` |
+    | MiniMax | `https://api.minimaxi.com/anthropic` |
+    | MiniMax en | `https://api.minimax.io/anthropic` |
+    | DouBaoSeed | `https://ark.cn-beijing.volces.com/api/coding` |
+    | AiHubMix | `https://aihubmix.com` |
+    | SiliconFlow | `https://api.siliconflow.cn` |
+    | SiliconFlow en | `https://api.siliconflow.com` |
+    | OpenRouter | `https://openrouter.ai/api` |
+    | Nvidia | `https://integrate.api.nvidia.com` |
+    | GitHub Copilot | `https://api.githubcopilot.com` (OAuth) |
+    | Codex (ChatGPT Plus/Pro) | `https://chatgpt.com/backend-api/codex` (OAuth) |
+    | + many more | See the in-app preset list |
+
+    <Note>The Claude preset list is continuously updated. Refer to the actual list shown in the app for the latest entries.</Note>
+  </Tab>
+  <Tab title="Codex">
+    | Preset | Base URL (`config.toml`) |
+    |--------|--------------------------|
+    | OpenAI Official | Official login (no endpoint) |
+    | Azure OpenAI | `https://YOUR_RESOURCE_NAME.openai.azure.com/openai` |
+    | AiHubMix | `https://aihubmix.com/v1` |
+    | DMXAPI | `https://www.dmxapi.cn/v1` |
+    | PackyCode | `https://www.packyapi.com/v1` |
+    | Cubence | `https://api.cubence.com/v1` |
+    | AIGoCode | `https://api.aigocode.com` |
+    | RightCode | `https://right.codes/codex/v1` |
+    | AICodeMirror | `https://api.aicodemirror.com/api/codex/backend-api/codex` |
+    | OpenRouter | `https://openrouter.ai/api/v1` |
+  </Tab>
+  <Tab title="Gemini CLI">
+    | Preset | Base URL (`GOOGLE_GEMINI_BASE_URL`) |
+    |--------|-------------------------------------|
+    | Google Official | Official OAuth login |
+    | PackyCode | `https://www.packyapi.com` |
+    | Cubence | `https://api.cubence.com` |
+    | AIGoCode | `https://api.aigocode.com` |
+    | AICodeMirror | `https://api.aicodemirror.com/api/gemini` |
+    | OpenRouter | `https://openrouter.ai/api` |
+    | Custom | Manually enter all fields |
+  </Tab>
+  <Tab title="OpenCode">
+    | Preset | SDK package | Base URL |
+    |--------|-------------|----------|
+    | DeepSeek | `@ai-sdk/openai-compatible` | `https://api.deepseek.com/v1` |
+    | Zhipu GLM | `@ai-sdk/openai-compatible` | `https://open.bigmodel.cn/api/paas/v4` |
+    | Kimi k2.6 | `@ai-sdk/openai-compatible` | `https://api.moonshot.cn/v1` |
+    | MiniMax | `@ai-sdk/openai-compatible` | `https://api.minimaxi.com/v1` |
+    | AiHubMix | `@ai-sdk/anthropic` | `https://aihubmix.com/v1` |
+    | OpenRouter | `@ai-sdk/anthropic` | `https://openrouter.ai/api/v1` |
+    | AWS Bedrock | `@ai-sdk/amazon-bedrock` | Region-based |
+    | OpenAI Compatible | `@ai-sdk/openai-compatible` | Custom |
+    | + many more | See the in-app preset list | — |
+  </Tab>
+  <Tab title="OpenClaw">
+    | Preset | API protocol | Base URL |
+    |--------|--------------|----------|
+    | DeepSeek | `openai-completions` | `https://api.deepseek.com/v1` |
+    | Zhipu GLM | `openai-completions` | `https://open.bigmodel.cn/api/paas/v4` |
+    | Qwen Coder | `openai-completions` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+    | Kimi k2.6 | `openai-completions` | `https://api.moonshot.cn/v1` |
+    | MiniMax | `openai-completions` | `https://api.minimaxi.com/v1` |
+    | SiliconFlow | `openai-completions` | `https://api.siliconflow.cn/v1` |
+    | AiHubMix | `anthropic-messages` | `https://aihubmix.com` |
+    | OpenRouter | `openai-completions` | `https://openrouter.ai/api/v1` |
+    | AWS Bedrock | `bedrock-converse-stream` | Region-based |
+    | OpenAI Compatible | `openai-completions` | Custom |
+    | + many more | See the in-app preset list | — |
+  </Tab>
+</Tabs>
+
+---
+
+## Method 2: Custom configuration
+
+Select the **Custom** preset (or leave the preset blank) to enter the configuration manually in the built-in JSON or TOML editor. The editor provides syntax highlighting, format validation, and error messages.
+
+<Tabs>
+  <Tab title="Claude Code">
+    CC Switch writes the provider config to `~/.claude/settings.json` under the `env` key.
+
+    ```json
+    {
+      "env": {
+        "ANTHROPIC_API_KEY": "your-api-key",
+        "ANTHROPIC_BASE_URL": "https://api.example.com"
+      }
+    }
+    ```
+
+    | Field | Required | Description |
+    |-------|----------|-------------|
+    | `ANTHROPIC_API_KEY` | Yes (or use `ANTHROPIC_AUTH_TOKEN`) | API key |
+    | `ANTHROPIC_AUTH_TOKEN` | Alternative to `ANTHROPIC_API_KEY` | Alternative authentication field |
+    | `ANTHROPIC_BASE_URL` | No | Custom endpoint prefix |
+    | `ANTHROPIC_MODEL` | No | Override the default model |
+  </Tab>
+  <Tab title="Codex">
+    Codex uses two separate files. CC Switch manages both.
+
+    **`~/.codex/auth.json`** — stores the API key:
+
+    ```json
+    {
+      "OPENAI_API_KEY": "your-api-key"
+    }
+    ```
+
+    **`~/.codex/config.toml`** — stores model and endpoint configuration:
+
+    ```toml
+    model_provider = "custom"
+    model = "gpt-5.2"
+    model_reasoning_effort = "high"
+    disable_response_storage = true
+
+    [model_providers.custom]
+    name = "custom"
+    base_url = "https://api.example.com/v1"
+    wire_api = "responses"
+    requires_openai_auth = true
+    ```
+
+    | Field | Required | Description |
+    |-------|----------|-------------|
+    | `model_provider` | Yes | Must match the `[model_providers.xxx]` section name |
+    | `model` | Yes | Model ID (e.g. `gpt-5.2`, `gpt-5.4`) |
+    | `base_url` | Yes | API endpoint URL (include `/v1`) |
+    | `wire_api` | No | API wire format (usually `responses`) |
+    | `model_reasoning_effort` | No | `low` / `medium` / `high` |
+    | `disable_response_storage` | No | Whether to disable response storage |
+  </Tab>
+  <Tab title="Gemini CLI">
+    CC Switch writes the provider config to `~/.gemini/.env`.
+
+    ```json
+    {
+      "env": {
+        "GEMINI_API_KEY": "your-api-key",
+        "GOOGLE_GEMINI_BASE_URL": "https://api.example.com"
+      }
+    }
+    ```
+
+    | Field | Required | Description |
+    |-------|----------|-------------|
+    | `GEMINI_API_KEY` | Yes | API key |
+    | `GOOGLE_GEMINI_BASE_URL` | No | Custom endpoint URL |
+    | `GEMINI_MODEL` | No | Override the model |
+
+    <Note>CC Switch auto-detects the authentication type (PackyCode API proxy / Google OAuth / generic API key). No manual configuration of auth type is needed.</Note>
+  </Tab>
+</Tabs>
+
+---
+
+## Method 3: Universal Provider
+
+Universal Providers share a single base URL and API key across Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw. They are designed for multi-protocol gateways such as NewAPI.
+
+<Steps>
+  <Step title="Switch to the Universal Provider tab">
+    In the Add Provider panel, click the **Universal Provider** tab.
+  </Step>
+  <Step title="Fill in the common fields">
+    Enter a **Name**, **API Key**, and **Endpoint URL**.
+  </Step>
+  <Step title="Select target apps">
+    Check the apps you want to sync to: Claude / Codex / Gemini / OpenCode / OpenClaw.
+  </Step>
+  <Step title="Save or Save and Sync">
+    | Action | Effect |
+    |--------|--------|
+    | **Save** | Saves the configuration without writing to any app config file yet |
+    | **Save and Sync** | Saves and immediately writes the translated config to all enabled apps |
+  </Step>
+</Steps>
+
+After saving, you can trigger a manual sync at any time by clicking the **Sync** button on the Universal Provider card. Editing or deleting a Universal Provider propagates changes to all linked app providers.
+
+---
+
+## Shared Config Snippet (Claude)
+
+When editing a Claude provider, the **Write Common Config** checkbox merges a reusable JSON snippet into the provider's config at save time. Click **Edit Common Config** to customize the snippet. This is useful for inserting shared settings like `effortLevel` or feature flags across multiple providers without editing each one individually.
+
+A set of quick-toggle switches above the JSON editor lets you flip common Claude settings without touching JSON directly:
+
+| Toggle | Effect |
+|--------|--------|
+| **Hide Attribution** | Sets `attribution: {commit: "", pr: ""}` |
+| **Enable Teammates** | Sets `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"` |
+| **Enable Tool Search** | Sets `env.ENABLE_TOOL_SEARCH = "true"` |
+| **Max Effort** | Sets `effortLevel = "max"` |
+| **Disable Auto Upgrade** | Sets `env.DISABLE_AUTOUPDATER = "1"` |
+
+---
+
+## Advanced options
+
+### API format (Claude only)
+
+When adding a Claude provider that routes through a third-party proxy, select the correct **API Format** in Advanced Options:
+
+| Format | When to use |
+|--------|-------------|
+| **Anthropic Messages** (default) | Direct Anthropic API or Anthropic-compatible proxies |
+| **OpenAI Chat Completions** | Provider only supports OpenAI Chat format; proxy converts |
+| **OpenAI Responses API** | Provider only supports OpenAI Responses format; proxy converts |
+
+The Advanced Options section expands automatically when a non-default API format is configured.
+
+### Full URL Endpoint Mode (v3.13.0+)
+
+By default CC Switch treats the configured `base_url` as a prefix and appends `/v1/chat/completions`. Enable **Full URL Mode** when the vendor requires a non-standard path.
+
+| Mode | `base_url` value | Actual request target |
+|------|-----------------|----------------------|
+| Default | `https://api.example.com` | `https://api.example.com/v1/chat/completions` |
+| Full URL Mode | `https://api.example.com/custom/path/messages` | `https://api.example.com/custom/path/messages` |
+
+### Codex 1M context window
+
+When adding a Codex provider, the **Enable 1M Context Window** toggle sets `model_context_window = 1000000` and `model_auto_compact_token_limit = 900000` in `config.toml`. The compact limit is customizable in the text field that appears when the toggle is on.
+
+---
+
+## Codex OAuth reverse proxy (Claude provider, v3.13.0+)
+
+This feature lets you reuse your ChatGPT Plus or Pro account's Codex service inside Claude Code, without a separate OpenAI API key. It appears as a special Claude provider type.
+
+<Warning>
+  The Codex OAuth reverse proxy accesses ChatGPT's Codex service through a reverse-engineered OAuth flow. It may violate OpenAI's Terms of Service and could result in account restrictions. By enabling it you assume all associated risks. Read the full risk notice in the v3.13.0 release notes before proceeding.
+</Warning>
+
+<Steps>
+  <Step title="Switch to the Claude app">
+    Select the **Claude** tab in CC Switch.
+  </Step>
+  <Step title="Open the Add Provider panel">
+    Click **+** and select the **Codex (ChatGPT Plus/Pro)** preset under the third-party category.
+  </Step>
+  <Step title="Complete the Device Code login flow">
+    If no ChatGPT account is logged in, CC Switch automatically starts the Device Code flow:
+    1. An 8-character verification code and the authorization URL `https://auth.openai.com/codex/device` are displayed.
+    2. Visit the URL, log in to ChatGPT, and enter the verification code.
+    3. CC Switch polls for authorization and closes the dialog automatically once approved.
+
+    <Note>Verification codes expire after approximately 15 minutes. Click **Retry** to get a new code if it expires.</Note>
+  </Step>
+  <Step title="Save the provider">
+    After login succeeds, the provider form shows the logged-in account. Click **Save**.
+  </Step>
+</Steps>
+
+### Default models for Codex OAuth
+
+| Role | Default model |
+|------|---------------|
+| Main / Sonnet / Opus | `gpt-5.4` |
+| Haiku | `gpt-5.4-mini` |
+
+You can override these by editing the `ANTHROPIC_MODEL` and related env vars in the provider's JSON editor.
+
+### Token auto-refresh
+
+Tokens are refreshed automatically 60 seconds before expiry. Refresh tokens are stored locally and never uploaded. If a token fails to refresh, the provider card shows a yellow **Session Expired** warning — remove the account in **Settings → OAuth Auth Center** and log in again.
+
+---
+
+## Import providers
+
+CC Switch supports two import methods:
+
+<AccordionGroup>
+  <Accordion title="Deep link import (ccswitch://)">
+    Click or visit a `ccswitch://` deep link. CC Switch opens automatically, shows a preview of the provider configuration, and asks you to confirm before importing.
+
+    You can generate deep links using the [online generator tool](https://farion1231.github.io/cc-switch/deplink.html) or obtain them from shared links.
+  </Accordion>
+  <Accordion title="Database backup import">
+    Go to **Settings → Advanced → Data Management**, click **Select File**, and choose a previously exported `.sql` backup. This imports all provider configurations, MCP server configs, prompt presets, and usage logs in one step.
+
+    <Warning>Importing overwrites the existing database. Export your current configuration as a backup first. Exported file names follow the format `cc-switch-export-{timestamp}.sql`.</Warning>
+  </Accordion>
+</AccordionGroup>

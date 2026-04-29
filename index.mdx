@@ -1,133 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
-icon: 'star'
+title: "CC Switch: All-in-One AI CLI Tool Manager"
+description: "CC Switch is a desktop app to manage providers, MCP servers, Skills, and proxy failover for Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw."
 ---
 
-## Setting up
+CC Switch gives you a single desktop interface to manage all your AI coding tools. Instead of editing JSON, TOML, and `.env` files by hand, you get one-click provider switching, 50+ built-in presets, unified MCP and Skills management, and a local proxy with automatic failover — all backed by a reliable SQLite database.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="rocket" href="/introduction">
+    Learn what CC Switch is, which tools it supports, and how it works.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Installation" icon="download" href="/installation">
+    Install CC Switch on Windows, macOS, or Linux in minutes.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Quick Start" icon="bolt" href="/quickstart">
+    Add your first provider and start switching in under 5 minutes.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Provider Management" icon="server" href="/providers/overview">
+    Manage API providers across all five AI CLI tools from one place.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What CC Switch does
 
-Everything you need to create world-class documentation.
+CC Switch solves a real pain point for developers who use multiple AI coding tools: each tool (Claude Code, Codex, Gemini CLI, OpenCode, OpenClaw) stores its configuration in a different format and location. Switching providers means manually editing files — and there's no unified way to share MCP servers or Skills across tools.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={2}>
+  <Card title="MCP Servers" icon="plug" href="/extensions/mcp-servers">
+    Add and sync Model Context Protocol servers across all four supported apps with bidirectional sync.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Skills" icon="graduation-cap" href="/extensions/skills">
+    Install Skills from GitHub repos or ZIP files with one click, synced to all apps.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Proxy & Failover" icon="shield" href="/proxy/proxy-service">
+    Run a local proxy with auto-failover, circuit breaker, and API format conversion.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="Deep Link Protocol" icon="link" href="/reference/deep-link">
+    Share provider configs, MCP servers, and prompts via the ccswitch:// URL protocol.
   </Card>
-</Columns>
+</CardGroup>
 
-## Make your content agent ready
+## Get up and running
 
-Make your docs work for humans and AI agents alike.
+<Steps>
+  <Step title="Download and install CC Switch">
+    Download the installer for your platform from the [GitHub Releases](https://github.com/farion1231/cc-switch/releases) page. See [Installation](/installation) for platform-specific instructions.
+  </Step>
+  <Step title="Add a provider">
+    Click **+** in the top-right corner, pick a preset (50+ available), enter your API key, and click **Add**. See [Add Provider](/providers/add-provider).
+  </Step>
+  <Step title="Switch and activate">
+    Click **Enable** on a provider card in the main UI, or use the system tray menu for instant switching. Restart your terminal (except Claude Code, which hot-reloads). See [Switch Provider](/providers/switch-provider).
+  </Step>
+  <Step title="Extend with MCP, Skills, and Prompts">
+    Use the **MCP**, **Skills**, and **Prompts** panels to extend your AI tools with servers, capabilities, and system prompts — all synced across apps. See [Extensions](/extensions/mcp-servers).
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Prompt component"
-    icon="robot"
-    href="/agent-ready/prompt"
-  >
-    Embed shareable AI prompts readers can copy or open in Cursor.
-  </Card>
-  <Card
-    title="Visibility"
-    icon="eye"
-    href="/agent-ready/visibility"
-  >
-    Show different content to humans and agents reading your docs.
-  </Card>
-  <Card
-    title="Contextual menu"
-    icon="bolt"
-    href="/agent-ready/contextual"
-  >
-    Give readers one-click access to Claude, ChatGPT, Cursor, and more.
-  </Card>
-  <Card
-    title="AI coding tools"
-    icon="wand-magic-sparkles"
-    href="/ai-tools/claude-code"
-  >
-    Set up Claude Code, Cursor, or Windsurf with Mintlify's skill.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Note>
+  CC Switch stores all data locally in `~/.cc-switch/cc-switch.db` (SQLite). Your API keys and configurations never leave your machine unless you explicitly enable cloud sync.
+</Note>

@@ -1,0 +1,160 @@
+---
+title: "Automatic failover and circuit breaker configuration"
+description: "Set up provider failover queues and circuit breakers so CC Switch switches automatically when a request fails, keeping your tools running."
+---
+
+Failover lets CC Switch automatically switch from a failing provider to the next one in a priority queue, without any intervention from you. A built-in circuit breaker tracks consecutive failures per provider and temporarily skips providers that are clearly unavailable, preventing wasted retries. This page covers how to build a failover queue, how the circuit breaker operates, and how to read the health status indicators in the UI.
+
+## Prerequisites
+
+Before failover can trigger, four things must be in place:
+
+1. Proxy service is started
+2. App takeover is enabled for the relevant app
+3. A failover queue with at least two providers is configured
+4. **Auto Failover** is switched on in the failover settings
+
+## Configuring the failover queue
+
+<Steps>
+  <Step title="Open the failover settings">
+    Go to **Settings → Advanced → Failover**. Three tabs at the top let you configure Claude, Codex, and Gemini independently.
+  </Step>
+  <Step title="Select the app to configure">
+    Click the **Claude**, **Codex**, or **Gemini** tab. Each app has its own queue, circuit breaker defaults, and auto-failover toggle.
+  </Step>
+  <Step title="Add providers to the queue">
+    In the **Failover Queue** area, click **Add Provider** and select a provider from the dropdown. The provider is appended to the end of the queue. Repeat for each backup provider you want.
+  </Step>
+  <Step title="Adjust priority order">
+    Drag providers up or down to set their priority. Lower numbers mean higher priority — the proxy tries providers in ascending order when a failure occurs.
+  </Step>
+  <Step title="Enable auto failover">
+    Turn on the **Auto Failover** toggle at the top of the page. With this off, failures are logged but the proxy does not switch providers automatically.
+  </Step>
+</Steps>
+
+You can also add and remove providers from the queue directly from the main interface. When both the proxy and failover are enabled, each provider card shows a failover toggle — enabling it adds the provider to the queue; disabling it removes it.
+
+## How the failover queue is displayed
+
+The proxy panel and failover settings page both show the queue state for each app. Here is an example of what the queue display looks like:
+
+```text
+Claude
+├── 1. PackyCode      [Currently Using] ●
+├── 2. AIGoCode                          ●
+└── 3. Backup Provider                   ○
+
+Codex
+├── 1. AIGoCode       [Currently Using] ●
+└── 2. Backup Provider                   ●
+```
+
+- Numbers indicate the priority order the proxy follows when failing over
+- **[Currently Using]** identifies the provider currently handling requests
+- The colored dot on the right is the health badge (see [Health status indicators](#health-status-indicators) below)
+
+## How failover works
+
+When the proxy receives a failed response:
+
+1. The failure is recorded against the current provider
+2. The circuit breaker checks the provider's failure count
+3. If the circuit breaker has tripped on that provider, it is skipped immediately
+4. Otherwise, the failure count is incremented
+5. The proxy moves to the next provider in the queue and retries the request
+6. If no providers remain, an error is returned to the CLI tool
+
+When auto failover is off, steps 3–5 do not occur — the failure is logged but the provider is not changed.
+
+## Health status indicators
+
+Provider cards and the queue list both display a health badge:
+
+| Badge color | Status | Consecutive failures |
+|---|---|---|
+| Green | Healthy | 0 |
+| Yellow | Degraded — has failures, circuit not tripped | 1–2 |
+| Red | Circuit broken — provider is temporarily skipped | 3 or more |
+
+## Circuit breaker configuration
+
+The circuit breaker prevents the proxy from hammering a provider that is clearly down. Each app has independent settings with different defaults — Claude uses more relaxed thresholds because its requests take longer.
+
+### Failure and recovery thresholds
+
+| Setting | Description | General default | Claude default | Range |
+|---|---|---|---|---|
+| Failure Threshold | Consecutive failures before the circuit opens | 4 | 8 | 1–20 |
+| Recovery Success Threshold | Successful probes needed in half-open state to close the circuit | 2 | 3 | 1–10 |
+| Recovery Wait Time | Seconds to wait before attempting recovery after tripping | 60 | 90 | 0–300 |
+| Error Rate Threshold | Request error rate that opens the circuit | 60% | 70% | 0–100% |
+| Minimum Requests | Minimum requests before error rate is calculated | 10 | 15 | 5–100 |
+
+### Timeout settings
+
+| Setting | Description | General default | Claude default | Range |
+|---|---|---|---|---|
+| Stream First Byte Timeout | Maximum wait for the first streaming data chunk (seconds) | 60 | 90 | 1–120 |
+| Stream Idle Timeout | Maximum gap between streaming data chunks (seconds) | 120 | 180 | 60–600 (0 to disable) |
+| Non-stream Timeout | Total timeout for non-streaming requests (seconds) | 600 | 600 | 60–1200 |
+
+### Retry settings
+
+| Setting | Description | General default | Claude default | Range |
+|---|---|---|---|---|
+| Max Retries | Number of retries on failure before moving to the next provider | 3 | 6 | 0–10 |
+
+<Note>
+  Gemini's default max retries is 5. Circuit breaker changes take effect immediately without restarting the proxy.
+</Note>
+
+### Circuit breaker states
+
+| State | Description |
+|---|---|
+| Closed | Normal — requests are forwarded to this provider |
+| Open | Circuit tripped — provider is skipped until the recovery wait time expires |
+| Half-Open | Recovery probe in progress — test requests are sent to check if the provider has recovered |
+
+The circuit transitions from **Open** to **Half-Open** automatically after the recovery wait time. If probe requests succeed (reaching the recovery success threshold), it moves to **Closed**. Any probe failure returns it to **Open**.
+
+## App takeover granularity
+
+Failover is configured and operates independently per app. You can proxy Claude requests through the failover queue while Codex continues using its configured provider directly, or mix any combination:
+
+- Each app has its own queue, circuit breaker settings, and auto-failover toggle
+- Enabling or disabling failover for one app does not affect the others
+- Provider switching in proxy mode takes effect immediately — you do not need to restart the CLI tool
+
+## Failover log
+
+Each failover event is recorded in the request log with the following fields:
+
+| Field | Description |
+|---|---|
+| Time | When the failover occurred |
+| Original Provider | The provider that failed |
+| New Provider | The provider switched to |
+| Failure Reason | The error message from the failed request |
+
+View these logs in **Settings → Usage** under the Request Logs tab.
+
+## Recommended queue configuration
+
+<AccordionGroup>
+  <Accordion title="Queue structure best practices">
+    Place your most stable and fastest provider at position 1. Put your second-best choice at position 2, and keep a last-resort option at position 3. This ensures the proxy spends the least time on failures.
+  </Accordion>
+  <Accordion title="Circuit breaker tuning by scenario">
+    | Scenario | Failure Threshold | Recovery Wait |
+    |---|---|---|
+    | High-availability requirement | 2 | 30 seconds |
+    | General use | 3 | 60 seconds |
+    | Tolerant of occasional failures | 5 | 120 seconds |
+  </Accordion>
+  <Accordion title="All providers circuit-broken">
+    Wait for the recovery wait time to expire — providers will automatically move to half-open and attempt recovery. You can also restart the proxy service, or reset individual circuit breakers by clicking the provider card's reset button.
+  </Accordion>
+</AccordionGroup>

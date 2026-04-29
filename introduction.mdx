@@ -1,0 +1,65 @@
+---
+title: "CC Switch: Manage All Your AI CLI Tools in One App"
+description: "Learn what CC Switch is, which five AI CLI tools it supports, and how its core features solve the pain of managing scattered provider configurations."
+---
+
+CC Switch is a cross-platform desktop application that centralizes provider management, MCP servers, Skills, Sessions, and proxy failover for five AI coding tools: Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw. This page explains what CC Switch does, the problems it solves, and what you can do with it.
+
+## What CC Switch solves
+
+Modern AI-assisted development relies on CLI tools that each store their configuration in a different format and location. Switching API providers means manually editing JSON, TOML, or `.env` files — and there is no unified way to share MCP servers or Skills across tools.
+
+CC Switch replaces all that manual editing with a single visual interface. You get one-click provider switching with 50+ built-in presets, unified MCP and Skills management across apps, and a local proxy with automatic failover — backed by a reliable SQLite database with atomic writes that protect your configs from corruption.
+
+## Supported applications
+
+CC Switch manages configuration for five AI coding CLI tools:
+
+| Application | Description |
+|---|---|
+| **Claude Code** | Anthropic's official AI coding assistant |
+| **Codex** | OpenAI's code generation tool |
+| **Gemini CLI** | Google's AI command-line tool |
+| **OpenCode** | Open-source AI coding terminal tool |
+| **OpenClaw** | Open-source AI coding assistant (multi-provider gateway) |
+
+## Core features
+
+<CardGroup cols={2}>
+  <Card title="Provider management" icon="server">
+    One-click switching between multiple API providers, 50+ built-in presets, universal providers that sync a single config across apps, usage balance display, and endpoint speed testing.
+  </Card>
+  <Card title="Extensions" icon="plug">
+    Manage MCP servers, system prompt presets, and Skills from a unified panel. Changes sync bidirectionally to live config files across all supported apps.
+  </Card>
+  <Card title="Proxy & high availability" icon="shield">
+    A local proxy service that logs requests, tracks token usage and costs, and automatically fails over to a backup provider when the primary goes down — with a circuit breaker to prevent repeated retries.
+  </Card>
+  <Card title="System tray quick switch" icon="layout-grid">
+    Switch providers instantly from the system tray without opening the full app. Lightweight Mode keeps CC Switch running at near-zero memory usage when idle.
+  </Card>
+  <Card title="Sessions & workspace" icon="clock-rotate-left">
+    Browse, search, and restore conversation history across all five supported apps. The workspace editor lets you edit OpenClaw agent files with Markdown preview.
+  </Card>
+  <Card title="Cloud sync" icon="cloud">
+    Sync provider data across devices using a custom config directory (Dropbox, OneDrive, iCloud) or a WebDAV server, with automatic backups and restore.
+  </Card>
+</CardGroup>
+
+## Supported platforms
+
+| Platform | Minimum version |
+|---|---|
+| **Windows** | Windows 10 and above |
+| **macOS** | macOS 12 (Monterey) and above |
+| **Linux** | Ubuntu 22.04+ / Debian 11+ / Fedora 34+ |
+
+## How it works
+
+CC Switch is built with Tauri 2 and Rust on the backend and React 18 + TypeScript on the frontend. All data — providers, MCP servers, prompts, and Skills — is stored in a local SQLite database at `~/.cc-switch/cc-switch.db`. Device-level settings are stored separately in `~/.cc-switch/settings.json`.
+
+When you switch providers, CC Switch writes the new configuration directly to the corresponding CLI tool's config file using atomic writes (temp file + rename) to prevent corruption. For Claude Code, changes take effect immediately via hot-reload. For all other tools, you restart the terminal to pick up the new config.
+
+<Note>
+  Your API keys and provider configurations are stored entirely on your machine. Nothing is sent to external servers unless you explicitly enable WebDAV cloud sync.
+</Note>

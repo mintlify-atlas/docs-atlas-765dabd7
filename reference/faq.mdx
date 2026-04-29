@@ -1,0 +1,214 @@
+---
+title: 'CC Switch frequently asked questions (FAQ) reference'
+description: 'Answers to common questions about installation, providers, proxy, data storage, environment variable conflicts, and lightweight mode in CC Switch.'
+---
+
+This page collects the most common questions about CC Switch. If your question isn't here, search [GitHub Issues](https://github.com/farion1231/cc-switch/issues) or open a new issue with your operating system version, CC Switch version, a description of the problem, and any error messages.
+
+<AccordionGroup>
+
+  <Accordion title="Which CLI tools does CC Switch support?">
+    CC Switch supports five tools: **Claude Code**, **Codex**, **Gemini CLI**, **OpenCode**, and **OpenClaw**. Each tool has dedicated provider presets and configuration management. You can hide tools you don't use from **Settings** → **App Visibility** to keep the interface clean.
+  </Accordion>
+
+  <Accordion title="Do I need to restart the terminal after switching providers?">
+    For most tools, yes — restart your terminal or the CLI tool for changes to take effect. The exception is **Claude Code**, which supports hot-switching of provider data without a restart.
+
+    - **Claude Code**: No restart needed (hot-switching supported)
+    - **Codex**: Close and reopen the terminal
+    - **Gemini CLI**: Tray switching takes effect immediately
+    - **OpenCode / OpenClaw**: Restart the terminal or the tool
+  </Accordion>
+
+  <Accordion title="My plugin configuration disappeared after switching providers — what happened?">
+    CC Switch provides a **Shared Config Snippet** feature to preserve configuration data (beyond API keys and endpoints) when switching between providers. To use it:
+
+    1. Go to **Edit Provider** → **Shared Config Panel**
+    2. Click **Extract from Current Provider** to save all common config data
+    3. When creating a new provider, ensure **Write Shared Config** is checked (enabled by default) so the shared data is included
+
+    All your original configuration items are also preserved in the default provider that was imported when you first launched the app.
+  </Accordion>
+
+  <Accordion title="Why can't I delete the currently active provider?">
+    CC Switch follows a **minimal intrusion** design principle — even if you uninstall CC Switch, your CLI tools will continue to work normally. The app always keeps at least one active provider configuration, because deleting all configurations would leave the corresponding CLI tool without valid credentials.
+
+    If you rarely use a specific CLI tool, hide it in **Settings** → **App Visibility**. To stop using a third-party provider, switch to an official login preset instead of deleting your only provider.
+  </Accordion>
+
+  <Accordion title="How do I switch back to official login?">
+    1. Open the **Add Provider** dialog
+    2. Select the **Official Login** preset (for Claude or Codex) or the **Google Official** preset (for Gemini)
+    3. Click **Enable** to switch to it
+    4. Restart the corresponding CLI tool
+    5. Follow that tool's standard login or OAuth flow
+
+    Codex supports multiple official providers, making it easy to switch between different Plus or Team accounts.
+  </Accordion>
+
+  <Accordion title="Where is my data stored?">
+    All CC Switch data is stored under `~/.cc-switch/`:
+
+    | Path | Contents |
+    |------|----------|
+    | `~/.cc-switch/cc-switch.db` | SQLite database — providers, MCP, prompts, skills |
+    | `~/.cc-switch/settings.json` | Device-level UI preferences (not synced) |
+    | `~/.cc-switch/backups/` | Auto-rotated database backups (10 most recent) |
+    | `~/.cc-switch/skills/` | Installed skills (symlinked to apps by default) |
+    | `~/.cc-switch/skill-backups/` | Pre-uninstall skill backups (20 most recent) |
+
+    See [Config files reference](/reference/config-files) for the full details on each file.
+  </Accordion>
+
+  <Accordion title="macOS installation and notarization">
+    CC Switch for macOS is code-signed and notarized by Apple. You can download and install it directly — no extra steps or Gatekeeper overrides are needed.
+
+    **Install via Homebrew (recommended):**
+
+    ```bash
+    brew tap farion1231/ccswitch
+    brew install --cask cc-switch
+    ```
+
+    **Manual install:** Download the `.dmg` from the [Releases page](https://github.com/farion1231/cc-switch/releases) and drag CC Switch to your Applications folder.
+
+    If you encounter any issues, download the latest version from the Releases page. If the tray icon is not visible, check **System Settings** → menu bar icon settings.
+  </Accordion>
+
+  <Accordion title="Windows: app doesn't launch after installation">
+    **Possible causes:**
+
+    - Missing WebView2 runtime
+    - Antivirus software blocking the app
+
+    **Solutions:**
+
+    1. Install [Microsoft Edge WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+    2. Add CC Switch to your antivirus software's whitelist
+
+    If the tray icon is not visible, check your taskbar settings to ensure the CC Switch icon is not hidden.
+  </Accordion>
+
+  <Accordion title="Linux: AppImage won't start">
+    Add execute permission to the AppImage and try running it:
+
+    ```bash
+    chmod +x CC-Switch-*.AppImage
+    ./CC-Switch-*.AppImage
+    ```
+
+    If it still fails:
+
+    ```bash
+    ./CC-Switch-*.AppImage --no-sandbox
+    ```
+
+    For tray icon support, you may need to install `libappindicator` or an equivalent package for your desktop environment.
+  </Accordion>
+
+  <Accordion title="How does CC Switch work with WSL?">
+    CC Switch is a native desktop app that runs on Windows, not inside WSL. It writes configuration files to Windows paths (for example, `%USERPROFILE%\.claude\settings.json`). If you run CLI tools inside WSL, those tools read their config from the Linux filesystem (`~/.claude/`), which is separate from the Windows paths CC Switch writes to.
+
+    To use CC Switch with WSL-based tools, either configure the CLI tools inside WSL to read from the Windows config path (via `/mnt/c/Users/...`), or run the CLI tools natively on Windows where CC Switch's config changes take effect directly.
+  </Accordion>
+
+  <Accordion title="How do I resolve environment variable conflicts?">
+    If CC Switch shows a yellow conflict warning, it means system environment variables such as `ANTHROPIC_BASE_URL` or `OPENAI_API_KEY` are set and will override the credentials CC Switch writes to config files.
+
+    **Using CC Switch's built-in tool:**
+
+    1. Click **Expand** on the conflict banner
+    2. Select the variables you want to remove
+    3. Click **Remove Selected** — CC Switch backs up the values before removal
+
+    **Manually on macOS / Linux:** Edit `~/.zshrc` or `~/.bashrc`, remove the relevant `export` lines, and run `source ~/.zshrc`.
+
+    **Manually on Windows:** Open **System Properties** → **Advanced** → **Environment Variables** and delete the conflicting entries.
+
+    Backed-up variable values are saved to `~/.cc-switch/env-backups/` as JSON files. See [Config files reference](/reference/config-files) for the full list of monitored variables.
+  </Accordion>
+
+  <Accordion title="What is lightweight mode?">
+    Lightweight Mode (added in v3.13.0) destroys the main window entirely while keeping CC Switch running as a tray-only app. This reduces idle memory usage to near zero.
+
+    **Enter lightweight mode:** Right-click the tray icon → click **Lightweight Mode**.
+
+    **Exit lightweight mode:** Click **Open Main Window** from the tray menu, or click a `ccswitch://` deep link — the window is rebuilt on demand.
+
+    | Aspect | Minimize to tray | Lightweight mode |
+    |--------|-----------------|-----------------|
+    | UI process | Kept in memory | Fully destroyed |
+    | Idle resource footprint | Same as normal | Near zero |
+    | Reopen speed | Instant | Slightly slower (window rebuild) |
+    | Tray switching | Available | Available |
+    | Deep link wake | Available | Available |
+
+    Lightweight Mode is not persistent — the next normal launch returns to the standard mode. Combine it with **Launch on Startup** for long-term background use.
+  </Accordion>
+
+  <Accordion title="Can deep links wake the main window in lightweight mode?">
+    Yes. Clicking a `ccswitch://` link while in Lightweight Mode rebuilds the main window on demand and displays the import confirmation dialog. The first open is slightly slower than normal because the window has to be rebuilt, but subsequent interactions return to normal speed.
+  </Accordion>
+
+  <Accordion title="Proxy service fails to start">
+    The most common cause is a port conflict. The default proxy port is `15721`. Check whether it is in use:
+
+    ```bash
+    # macOS / Linux
+    lsof -i :15721
+
+    # Windows
+    netstat -ano | findstr :15721
+    ```
+
+    Close the program using the port, or change the listen port in **Settings** → **Advanced** → **Proxy Service** and click **Save**.
+  </Accordion>
+
+  <Accordion title="Failover is not triggering">
+    Check all of the following:
+
+    - Proxy service is running
+    - App takeover is enabled for the relevant CLI tool
+    - Auto failover is enabled
+    - There is at least one backup provider in the failover queue
+
+    If failover is triggering too frequently, increase the failure threshold (for example, from 3 to 5) in the failover settings, or check whether your primary provider is unstable.
+  </Accordion>
+
+  <Accordion title="Why do some providers show quota automatically while others require manual setup?">
+    Only **official subscription types** — Claude, Codex, and Gemini official login; GitHub Copilot; Codex OAuth reverse proxy — display quota automatically after you enable the provider.
+
+    All other providers (Token Plan, third-party balance queries) require you to manually enable the **Usage Query** toggle in the provider card and select a built-in template, because the same request URL may expose both "plan" and "balance" query modes and CC Switch needs you to pick the correct one.
+  </Accordion>
+
+  <Accordion title="What are the risks of the Codex OAuth reverse proxy?">
+    The Codex OAuth reverse proxy accesses your ChatGPT account's Codex service through a reverse-engineered OAuth flow. This may violate OpenAI's Terms of Service and carries the risk of account restrictions or suspensions. There is no guarantee of long-term availability. By enabling this feature, you assume all associated risks.
+  </Accordion>
+
+  <Accordion title="Configuration was lost — how do I recover it?">
+    1. Check that `~/.cc-switch/` still exists
+    2. Open **Settings** → **Advanced** → **Backup & Restore** and restore from a recent backup
+    3. If no backup is available, import from a previously exported configuration file (**Settings** → **Advanced** → **Data Management** → **Import**)
+  </Accordion>
+
+  <Accordion title="Update failed">
+    1. Check your network connection
+    2. If using Homebrew: `brew upgrade --cask cc-switch`
+    3. Manually download and install the latest version from the [Releases page](https://github.com/farion1231/cc-switch/releases)
+  </Accordion>
+
+  <Accordion title="How do I submit a bug report?">
+    1. Visit [GitHub Issues](https://github.com/farion1231/cc-switch/issues) and search for similar reports
+    2. If none found, open a new issue and include:
+       - Operating system and version
+       - CC Switch version
+       - Steps to reproduce the problem
+       - Any error messages
+
+    Attach log files to help with diagnosis:
+
+    - **macOS / Linux:** `~/.cc-switch/logs/`
+    - **Windows:** `%APPDATA%\cc-switch\logs\`
+  </Accordion>
+
+</AccordionGroup>

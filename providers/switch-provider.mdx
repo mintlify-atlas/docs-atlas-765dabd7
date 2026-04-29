@@ -1,0 +1,152 @@
+---
+title: "Activate and switch between providers in CC Switch"
+description: "Enable providers from the main UI or system tray, understand per-app activation behavior, reorder and duplicate cards, and restore official login."
+---
+
+Switching a provider tells CC Switch to write the selected provider's configuration to the CLI tool's config file on disk. The process is the same whether you use the main window or the system tray — the difference is convenience.
+
+## Switch from the main interface
+
+In the provider list, find the card for the provider you want to use and click its **Enable** button.
+
+CC Switch updates the relevant config file immediately. The card that was previously active loses its active status, and the newly selected card is marked **Currently Active** with a blue border. If the proxy is also running in takeover mode, the card shows a green **Proxy Active** border instead.
+
+### Status indicators
+
+| Status | Visual | Meaning |
+|--------|--------|---------|
+| Currently Active | Blue border + label | Provider written to the CLI config file |
+| Proxy Active | Green border | Provider actually in use via proxy takeover mode |
+| Normal | Default style | Inactive provider |
+
+## Quick switch via system tray
+
+Right-click the CC Switch icon in the system tray to access provider submenus without opening the main window.
+
+<Steps>
+  <Step title="Right-click the tray icon">
+    The context menu opens.
+  </Step>
+  <Step title="Hover over the app submenu">
+    Each app has its own submenu (Claude, Codex, Gemini, OpenCode, OpenClaw). The submenu title shows the currently active provider name so you can see at a glance which provider each app is using.
+  </Step>
+  <Step title="Click the provider name">
+    The switch happens immediately. A brief tray notification confirms the change.
+  </Step>
+</Steps>
+
+### Tray submenus (v3.13.0+)
+
+Starting from v3.13.0 the tray menu uses per-app submenus instead of a flat list:
+
+| Submenu | Contents |
+|---------|----------|
+| **Claude** | All Claude providers, including Codex OAuth reverse proxy entries |
+| **Codex** | All Codex providers |
+| **Gemini** | All Gemini providers |
+| **OpenCode** | All OpenCode providers |
+| **OpenClaw** | All OpenClaw providers |
+
+Per-app submenus prevent menu overflow when many providers are configured and keep each app's providers isolated so switching one app's provider does not disturb the view for another.
+
+<Tip>
+  Combining background residency, Lightweight Mode, and per-app submenus is especially efficient for users who frequently switch among multiple apps. See Settings → Personalization → Lightweight Mode.
+</Tip>
+
+---
+
+## Activation behavior by app
+
+Different tools handle config file changes differently. Some pick up changes live; others need a terminal restart.
+
+| App | Activation behavior | Reason |
+|-----|--------------------|----|
+| **Claude Code** | Instant — no restart needed | Claude Code supports hot reload and detects config file changes automatically |
+| **Gemini CLI** | Instant — no restart needed | Gemini CLI re-reads the `.env` file on every request |
+| **Codex** | Requires terminal restart | Close the current terminal window and reopen it |
+| **OpenCode** | Requires terminal restart | Re-reads config on startup |
+| **OpenClaw** | Requires terminal restart | Re-reads config on startup |
+
+---
+
+## Config files modified on switch
+
+When you switch providers CC Switch writes to the following files:
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```
+    ~/.claude/settings.json
+    ```
+
+    Example of the written content:
+
+    ```json
+    {
+      "env": {
+        "ANTHROPIC_API_KEY": "new-api-key",
+        "ANTHROPIC_BASE_URL": "https://api.example.com"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Codex">
+    ```
+    ~/.codex/auth.json
+    ~/.codex/config.toml
+    ```
+
+    Both files are updated. `auth.json` receives the API key; `config.toml` receives the model, endpoint, and wire format.
+  </Tab>
+  <Tab title="Gemini CLI">
+    ```
+    ~/.gemini/.env
+    ~/.gemini/settings.json
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Reorder providers
+
+The display order of providers in the list also determines the default order for the proxy failover queue.
+
+1. Move the mouse to the **≡** drag handle on the left side of a provider card.
+2. Hold the left mouse button and drag up or down.
+3. Release to confirm the new position.
+
+Placing frequently used providers at the top of the list makes them faster to reach from both the main UI and the tray submenus.
+
+## Duplicate a provider
+
+Duplicating creates a complete copy of a provider including its configuration, notes, website link, icon, and endpoint list. The copy is placed directly below the original and gets a `copy` name suffix.
+
+1. Hover over the provider card to reveal action buttons.
+2. Click **Duplicate**.
+3. Edit the copy's name, API key, or endpoint as needed.
+
+This is useful for creating a variant of an existing provider (for example, a different model tier at the same endpoint) or for backing up a configuration before editing.
+
+---
+
+## Return to official login
+
+If you want to go back to the official vendor authentication flow after using a third-party provider:
+
+1. Add the official login preset (e.g., **Claude Official**, **OpenAI Official**, or **Google Official**).
+2. Enable that provider.
+3. Restart the terminal (Codex) or reopen a new session.
+4. Run the CLI tool's normal login command (e.g., `claude` or `gemini`).
+
+The official preset writes an empty `env` block so the CLI falls back to its built-in OAuth or API key flow.
+
+---
+
+## Troubleshooting switch failures
+
+| Cause | Symptom | Resolution |
+|-------|---------|------------|
+| Config file is locked | Switch fails immediately | Close the running CLI tool and retry |
+| Insufficient permissions | Permission denied error | Check write permissions on the config directory |
+| Invalid configuration format | Error shown in the UI | Edit the provider and fix any JSON or TOML syntax errors |

@@ -1,0 +1,143 @@
+---
+title: "Local proxy service for request routing and logging"
+description: "Run CC Switch's built-in HTTP proxy to route requests from Claude Code, Codex, and Gemini CLI with logging and API format conversion."
+---
+
+CC Switch includes a local HTTP proxy that sits between your CLI tools and their API providers. When enabled, it intercepts every outgoing API request, records it to a log, and forwards it to whichever provider you have active — without requiring you to manually edit configuration files. This page explains how to start the proxy, what gets configured automatically, how API format conversion works, and what the running-status panel shows.
+
+## Enabling the proxy
+
+<Steps>
+  <Step title="Open the proxy toggle">
+    On the CC Switch main interface, click the **Proxy Toggle** button at the top of the screen. The button turns green when the proxy is running. Alternatively, go to **Settings → Advanced → Proxy Service** and click the toggle in the top-right corner of the panel.
+  </Step>
+  <Step title="Verify the service address">
+    Once running, the panel displays the service address. The default is:
+
+    ```text
+    http://127.0.0.1:15721
+    ```
+
+    Click **Copy** to copy the address to your clipboard.
+  </Step>
+  <Step title="Enable app takeover">
+    In the **App Takeover** section of the proxy panel, toggle on each app whose requests you want to route — Claude, Codex, and/or Gemini. CC Switch immediately rewrites each app's configuration file to point its API endpoint at the local proxy. See the [Configuration changes](#configuration-changes) section below for the exact edits made.
+  </Step>
+</Steps>
+
+<Note>
+  When you stop the proxy, CC Switch automatically restores every modified app configuration to its original state, saves any pending request logs, and closes all open connections. No manual cleanup is required.
+</Note>
+
+## Proxy configuration
+
+You can adjust the listen address and port before starting the proxy. Stop the proxy first, make your changes, click **Save**, then restart.
+
+| Setting | Description | Default |
+|---|---|---|
+| Listen Address | IP address the proxy binds to | `127.0.0.1` |
+| Listen Port | Port the proxy listens on | `15721` |
+| Enable Logging | Record each request to the usage log | Enabled |
+
+### Listen address options
+
+| Address | Description |
+|---|---|
+| `127.0.0.1` | Accessible from this machine only (recommended) |
+| `0.0.0.0` | Allow access from other devices on your local network |
+
+## Configuration changes
+
+When you enable app takeover, CC Switch writes the following changes to each app's config file. The originals are backed up and restored automatically when the proxy stops.
+
+**Claude** — `~/.claude/settings.json`
+
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:15721"
+  }
+}
+```
+
+**Codex** — `~/.codex/config.toml`
+
+```toml
+base_url = "http://127.0.0.1:15721/v1"
+```
+
+**Gemini** — `~/.gemini/.env`
+
+```bash
+GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:15721
+```
+
+## API format conversion
+
+CC Switch supports automatic conversion between API formats. This lets you use providers that only offer an OpenAI-compatible API with Claude Code — the proxy translates requests and responses transparently for both streaming and non-streaming modes.
+
+| Provider API format | Proxy behavior |
+|---|---|
+| **Anthropic Messages** | Pass-through — no conversion applied |
+| **OpenAI Chat Completions** | Converts Anthropic requests to OpenAI Chat format and responses back |
+| **OpenAI Responses API** | Converts Anthropic requests to OpenAI Responses format and responses back |
+
+The API format is set per provider in the **Advanced Options** when adding or editing a Claude provider.
+
+## Running-status panel
+
+While the proxy is running, the panel shows live metrics and the current failover queue.
+
+### Statistics
+
+| Metric | Description |
+|---|---|
+| Active Connections | Number of requests currently in flight |
+| Total Requests | Cumulative requests handled since the proxy started |
+| Success Rate | Percentage of successful responses — shown in green above 90%, yellow at or below 90% |
+| Uptime | How long the proxy has been running in the current session |
+
+### Current providers
+
+The panel shows which provider each app is currently using:
+
+```text
+Claude: PackyCode
+Codex: AIGoCode
+Gemini: Google Official
+```
+
+### Failover queue
+
+The proxy panel also displays the failover queue for each app. Queue numbers reflect priority order; the currently active provider is marked **[Currently Using]**. Health badges show provider status at a glance:
+
+```text
+Claude
+├── 1. PackyCode      [Currently Using] ●
+├── 2. AIGoCode                          ●
+└── 3. Backup Provider                   ○
+
+Codex
+├── 1. AIGoCode       [Currently Using] ●
+└── 2. Backup Provider                   ●
+```
+
+| Badge color | Meaning |
+|---|---|
+| Green | Healthy — 0 consecutive failures |
+| Yellow | Degraded — 1–2 consecutive failures |
+| Red | Unhealthy — 3 or more consecutive failures, circuit breaker may trip |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port already in use">
+    If the proxy fails to start with `Address already in use`, either close the program occupying port 15721 or change the listen port in proxy settings before restarting.
+  </Accordion>
+  <Accordion title="Requests fail after enabling takeover">
+    Check that the proxy service is running (green toggle), the provider configuration is correct, and your network connection is active. You can test connectivity by sending a request directly to the provider API outside of CC Switch.
+  </Accordion>
+  <Accordion title="Request timeouts">
+    Timeouts are usually caused by network issues or a degraded provider. Try accessing the provider API directly, and check the provider's status page. Adjusting the circuit breaker and timeout settings in **Settings → Advanced → Failover** can also help.
+  </Accordion>
+</AccordionGroup>

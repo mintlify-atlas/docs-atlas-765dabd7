@@ -1,0 +1,221 @@
+---
+title: "Install CC Switch on Windows, macOS, and Linux"
+description: "Step-by-step instructions to install CC Switch on Windows (MSI or portable ZIP), macOS (Homebrew or DMG), and Linux (Arch, DEB, RPM, or AppImage)."
+---
+
+This page covers how to install CC Switch on every supported platform. Pick the tab for your operating system and follow the steps.
+
+## System requirements
+
+| Platform | Requirement |
+|---|---|
+| **Windows** | Windows 10 or above |
+| **macOS** | macOS 12 (Monterey) or above |
+| **Linux** | Ubuntu 22.04+ / Debian 11+ / Fedora 34+ or other mainstream distributions |
+
+<Note>
+  The CLI tools that CC Switch manages — Claude Code, Codex, and Gemini CLI — require Node.js 18 LTS or higher. Install Node.js before using those tools. OpenCode and OpenClaw have their own installation requirements.
+</Note>
+
+## Install CC Switch
+
+<Tabs>
+  <Tab title="Windows">
+    CC Switch for Windows is available as an MSI installer or as a portable ZIP that requires no installation.
+
+    **Option 1: MSI installer (recommended)**
+
+    <Steps>
+      <Step title="Open the Releases page">
+        Go to the [CC Switch Releases](https://github.com/farion1231/cc-switch/releases) page on GitHub.
+      </Step>
+      <Step title="Download the installer">
+        Download the file named `CC-Switch-v{version}-Windows.msi`.
+      </Step>
+      <Step title="Run the installer">
+        Double-click the `.msi` file and follow the on-screen prompts to complete installation.
+      </Step>
+      <Step title="Launch CC Switch">
+        Open CC Switch from the Start menu or desktop shortcut. You should see the main window and a CC Switch icon appear in the system tray.
+      </Step>
+    </Steps>
+
+    **Option 2: Portable ZIP (no installation required)**
+
+    <Steps>
+      <Step title="Download the portable ZIP">
+        From the [Releases](https://github.com/farion1231/cc-switch/releases) page, download `CC-Switch-v{version}-Windows-Portable.zip`.
+      </Step>
+      <Step title="Extract the archive">
+        Extract the ZIP to any directory of your choice.
+      </Step>
+      <Step title="Run the app">
+        Open the extracted folder and run `CC-Switch.exe`.
+      </Step>
+    </Steps>
+
+    **Uninstall**
+
+    To remove the MSI install, go to **Settings > Apps** and uninstall CC Switch, or run the uninstaller in the installation directory. The portable version is removed by deleting the extracted folder.
+  </Tab>
+  <Tab title="macOS">
+    CC Switch for macOS is code-signed and notarized by Apple. You can install and open it directly — no Gatekeeper warnings or extra steps needed.
+
+    **Option 1: Homebrew (recommended)**
+
+    <Steps>
+      <Step title="Add the CC Switch tap">
+        ```bash
+        brew tap farion1231/ccswitch
+        ```
+      </Step>
+      <Step title="Install CC Switch">
+        ```bash
+        brew install --cask cc-switch
+        ```
+      </Step>
+      <Step title="Launch CC Switch">
+        Open CC Switch from Launchpad or Spotlight. The app icon will appear in the menu bar.
+      </Step>
+    </Steps>
+
+    To update to the latest version:
+
+    ```bash
+    brew upgrade --cask cc-switch
+    ```
+
+    **Option 2: Manual DMG download**
+
+    <Steps>
+      <Step title="Open the Releases page">
+        Go to the [CC Switch Releases](https://github.com/farion1231/cc-switch/releases) page on GitHub.
+      </Step>
+      <Step title="Download the DMG">
+        Download `CC-Switch-v{version}-macOS.dmg` (recommended) or the `.zip` archive.
+      </Step>
+      <Step title="Install the app">
+        Open the DMG, then drag **CC Switch.app** to your **Applications** folder. If you downloaded the ZIP, extract it first to get `CC Switch.app`.
+      </Step>
+      <Step title="Launch CC Switch">
+        Open CC Switch from Applications or Launchpad.
+      </Step>
+    </Steps>
+
+    **Uninstall**
+
+    Move `CC Switch.app` to the Trash. To also remove configuration data, delete `~/.cc-switch/`.
+  </Tab>
+  <Tab title="Linux">
+    CC Switch is available for Arch Linux via the AUR, and for Debian/Ubuntu, Fedora/RHEL, and other distributions via `.deb`, `.rpm`, and `.AppImage` packages.
+
+    **Arch Linux (AUR)**
+
+    <Steps>
+      <Step title="Install using paru or yay">
+        ```bash
+        # Using paru
+        paru -S cc-switch-bin
+
+        # Or using yay
+        yay -S cc-switch-bin
+        ```
+      </Step>
+      <Step title="Launch CC Switch">
+        Run `cc-switch` from your terminal or application launcher.
+      </Step>
+    </Steps>
+
+    **Debian / Ubuntu (.deb)**
+
+    <Steps>
+      <Step title="Download the DEB package">
+        Go to the [CC Switch Releases](https://github.com/farion1231/cc-switch/releases) page and download `CC-Switch-v{version}-Linux.deb`.
+      </Step>
+      <Step title="Install the package">
+        ```bash
+        sudo dpkg -i CC-Switch-v{version}-Linux.deb
+        ```
+        If there are dependency issues:
+        ```bash
+        sudo apt-get install -f
+        ```
+      </Step>
+      <Step title="Launch CC Switch">
+        Run `cc-switch` from your terminal or application launcher.
+      </Step>
+    </Steps>
+
+    **Fedora / RHEL / openSUSE (.rpm)**
+
+    <Steps>
+      <Step title="Download the RPM package">
+        From the [Releases](https://github.com/farion1231/cc-switch/releases) page, download `CC-Switch-v{version}-Linux.rpm`.
+      </Step>
+      <Step title="Install the package">
+        ```bash
+        sudo rpm -i CC-Switch-v{version}-Linux.rpm
+        ```
+      </Step>
+      <Step title="Launch CC Switch">
+        Run `cc-switch` from your terminal or application launcher.
+      </Step>
+    </Steps>
+
+    **AppImage (universal)**
+
+    <Steps>
+      <Step title="Download the AppImage">
+        From the [Releases](https://github.com/farion1231/cc-switch/releases) page, download `CC-Switch-v{version}-Linux.AppImage`.
+      </Step>
+      <Step title="Make it executable">
+        ```bash
+        chmod +x CC-Switch-v{version}-Linux.AppImage
+        ```
+      </Step>
+      <Step title="Run the AppImage">
+        ```bash
+        ./CC-Switch-v{version}-Linux.AppImage
+        ```
+      </Step>
+    </Steps>
+
+    **Uninstall**
+
+    ```bash
+    # Debian/Ubuntu
+    sudo apt remove cc-switch
+
+    # Arch Linux
+    paru -R cc-switch-bin
+    ```
+  </Tab>
+</Tabs>
+
+## Verify installation
+
+After launching CC Switch, confirm the following:
+
+1. The main app window displays correctly.
+2. A CC Switch icon appears in the system tray (or menu bar on macOS).
+3. The app switcher in the top navigation bar lets you select between Claude, Codex, Gemini, OpenCode, and OpenClaw.
+
+## Auto-update
+
+CC Switch includes built-in auto-update functionality. It checks for updates on startup and displays a prompt when a new version is available. Click the prompt to download and install the update.
+
+You can also manually check for updates by opening **Settings > About**.
+
+## Install the CLI tools
+
+CC Switch manages configuration for the CLI tools, but you need to install the tools themselves separately. From **Settings > About**, CC Switch displays the currently installed version of each tool and provides one-click install commands:
+
+```bash
+npm i -g @anthropic-ai/claude-code@latest
+npm i -g @openai/codex@latest
+npm i -g @google/gemini-cli@latest
+npm i -g opencode@latest
+npm i -g openclaw@latest
+```
+
+Click **Copy** next to any command to copy it to your clipboard.

@@ -1,0 +1,54 @@
+---
+title: "CC Switch provider management: overview and concepts"
+description: "Learn how providers are stored in SQLite, which config files each app uses, and how Universal Providers sync one entry to several tools."
+---
+
+Provider management is the core of CC Switch. A **provider** is a saved combination of an API key, an endpoint URL, optional model overrides, and metadata (notes, icon, website link) for one of the five supported AI coding tools. All providers are stored in a local SQLite database — nothing is written to the CLI tools until you explicitly activate a provider, at which point CC Switch updates the relevant config file on disk.
+
+## Supported apps
+
+CC Switch manages providers for five separate CLI tools. Each has its own provider list, configuration format, and config file location.
+
+| App | Config file(s) |
+|-----|----------------|
+| Claude Code | `~/.claude/settings.json` |
+| Codex | `~/.codex/auth.json` and `~/.codex/config.toml` |
+| Gemini CLI | `~/.gemini/.env` and `~/.gemini/settings.json` |
+| OpenCode | OpenCode provider config file |
+| OpenClaw | OpenClaw provider config file |
+
+## What is a Universal Provider?
+
+A **Universal Provider** is a single configuration entry that can be synced to multiple apps at once. It is designed for API gateways (such as NewAPI) that speak several wire formats simultaneously — Anthropic Messages, OpenAI Chat Completions, and Gemini native — behind one endpoint and API key.
+
+When you save a Universal Provider and choose which apps to sync it to, CC Switch translates the shared base URL and API key into the native config format for each selected app. Editing or deleting a Universal Provider propagates the change to all linked app providers automatically.
+
+## Shared Config Snippet
+
+Claude providers support a **Write Common Config** toggle that merges a reusable JSON snippet into every provider that enables it. This is useful for injecting shared settings — such as `effortLevel`, feature flags, or attribution fields — without having to edit each provider individually. The snippet is edited once in **Edit Common Config** and applied at write time.
+
+## In this section
+
+<CardGroup cols={2}>
+  <Card
+    title="Add and configure providers"
+    icon="plus"
+    href="/providers/add-provider"
+  >
+    Use presets, custom JSON/TOML, or Universal Providers to register a new provider in CC Switch.
+  </Card>
+  <Card
+    title="Switch between providers"
+    icon="arrows-rotate"
+    href="/providers/switch-provider"
+  >
+    Activate a provider from the main UI or from the system tray, and understand per-app activation behavior.
+  </Card>
+  <Card
+    title="Track usage and balance"
+    icon="chart-bar"
+    href="/providers/usage-query"
+  >
+    Monitor quota consumption with built-in auto-query for official subscriptions and custom scripts for third-party providers.
+  </Card>
+</CardGroup>

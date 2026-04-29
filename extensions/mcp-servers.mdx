@@ -1,0 +1,131 @@
+---
+title: 'Manage MCP servers across all your AI coding tools'
+description: 'Add, configure, and sync Model Context Protocol servers to Claude Code, Codex, Gemini CLI, and OpenCode from a single interface in CC Switch.'
+---
+
+Model Context Protocol (MCP) is an open standard that lets AI tools connect to external data sources, APIs, and local services at runtime. CC Switch acts as a central hub for your MCP servers: you define a server once, then choose exactly which AI apps it syncs to — no more editing four separate config files by hand.
+
+## Adding an MCP server
+
+<Steps>
+  <Step title="Open the MCP panel">
+    Click the **MCP** button in the top navigation bar.
+  </Step>
+  <Step title="Click the + button">
+    Click the **+** button in the top-right corner of the panel to open the server editor.
+  </Step>
+  <Step title="Choose a preset or select Custom">
+    Pick a preset from the **Preset** dropdown to pre-fill a working configuration, or select **Custom** to define every field manually.
+  </Step>
+  <Step title="Adjust the configuration">
+    Review or edit the fields — Server ID, transport type, command or URL, arguments, environment variables, and headers as needed.
+  </Step>
+  <Step title="Bind to apps and save">
+    Toggle the per-app switches to choose which tools receive this server, then click **Save**.
+  </Step>
+</Steps>
+
+## Built-in presets
+
+CC Switch ships with ready-to-use presets for the most common MCP servers:
+
+| Preset | Package | Description |
+|---|---|---|
+| `fetch` | `mcp-server-fetch` | HTTP request tool — lets AI fetch web content |
+| `time` | `@modelcontextprotocol/server-time` | Provides current time information |
+| `memory` | `@modelcontextprotocol/server-memory` | Persistent key-value memory for AI sessions |
+| `sequential-thinking` | `@modelcontextprotocol/server-sequential-thinking` | Chain-of-thought reasoning enhancement |
+| `context7` | `@upstash/context7-mcp` | Documentation search for querying technical docs |
+
+## Transport types
+
+MCP servers communicate over three transport types. Choose the one that matches your server.
+
+### stdio (Standard I/O)
+
+The most common type — CC Switch launches a local process and communicates via stdin/stdout.
+
+```json
+{
+  "command": "uvx",
+  "args": ["mcp-server-fetch"],
+  "env": {}
+}
+```
+
+The command (`uvx`, `npx`, etc.) must be installed and available on `PATH`.
+
+### http
+
+Communicates with a remote or locally running server over HTTP.
+
+```json
+{
+  "url": "http://localhost:8080/mcp"
+}
+```
+
+### sse (Server-Sent Events)
+
+Connects to a server that pushes updates in real time over SSE.
+
+```json
+{
+  "url": "http://localhost:8080/sse"
+}
+```
+
+## Custom server configuration fields
+
+When you select **Custom**, fill in the following fields:
+
+| Field | Required | Description |
+|---|---|---|
+| Server ID | Yes | Unique identifier used as the key in config files |
+| Name | No | Human-readable display name |
+| Description | No | Short description of what the server does |
+| Transport Type | Yes | `stdio`, `http`, or `sse` |
+| Command | stdio only | Executable to launch (e.g., `uvx`, `npx`) |
+| Arguments | No | Additional command-line arguments |
+| URL | http/sse only | Full endpoint URL |
+| Headers | No | HTTP headers for `http` and `sse` transports |
+| Environment Variables | No | Environment variables passed to the server process |
+
+## App binding
+
+Each server independently controls which apps it syncs to. Toggle individual apps on or off from the server card.
+
+| Toggle | Syncs to | Config file |
+|---|---|---|
+| Claude | Claude Code | `~/.claude.json` → `mcpServers` |
+| Codex | Codex | `~/.codex/config.toml` → `[mcp_servers]` |
+| Gemini | Gemini CLI | `~/.gemini/settings.json` → `mcpServers` |
+| OpenCode | OpenCode | `~/.opencode/config.json` → `mcpServers` |
+
+<Note>
+OpenClaw does not currently support MCP server management. MCP sync is available for Claude Code, Codex, Gemini CLI, and OpenCode only.
+
+Sync only runs when the target app is installed: CC Switch checks for the presence of `~/.claude/` (or `~/.claude.json`), `~/.codex/`, `~/.gemini/`, or `~/.opencode/` before writing. Enabling a toggle for an app that is not installed has no effect but does not produce an error.
+</Note>
+
+## Bidirectional sync
+
+When you enable a toggle, CC Switch writes the server entry to the app's live config file immediately. When you disable a toggle, the entry is removed from that file. Changes take effect the next time the CLI tool starts.
+
+<Note>
+Sync is bidirectional for editing purposes: when you open a server for editing, CC Switch reads the current state from the live config files back into the UI, so any manual edits you made outside CC Switch are preserved. If you have existing MCP servers configured directly in a CLI tool, use the **Import** button to pull them into CC Switch.
+</Note>
+
+## Editing and deleting servers
+
+**To edit** — click the **Edit** button on the server row, modify the configuration, and click **Save**. Changes are immediately written to all enabled app config files.
+
+**To delete** — click the **Delete** button on the server row and confirm. The server entry is removed from every app config file it was synced to.
+
+## Importing existing configurations
+
+If you already have MCP servers configured in one or more CLI tools, you can import them into CC Switch without recreating them manually:
+
+1. Click the **Import** button in the MCP panel.
+2. Select the source app (Claude, Codex, Gemini, or OpenCode).
+3. CC Switch reads the existing config and adds the servers to its database.

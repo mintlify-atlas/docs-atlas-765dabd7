@@ -1,0 +1,281 @@
+---
+title: 'ccswitch:// deep link URL protocol reference guide'
+description: 'Complete reference for the ccswitch:// protocol — import providers, MCP servers, prompts, and skills into CC Switch with a single click.'
+---
+
+Deep links let you share CC Switch configurations as clickable URLs. When someone opens a `ccswitch://` link, CC Switch launches (or wakes from the system tray), shows an import confirmation dialog with a full preview, and applies the configuration after you confirm. You can use deep links to share provider presets with a team, embed one-click setup steps in a tutorial, or sync a configuration across your own devices without exporting a file.
+
+## Protocol format
+
+All deep links follow the V1 protocol structure:
+
+```
+ccswitch://v1/import?resource={type}&...parameters
+```
+
+The `resource` parameter determines the import type. Each resource type has its own set of parameters documented below.
+
+<Note>
+  CC Switch automatically registers the `ccswitch://` protocol during installation. If links stop opening, reinstall the app. On Linux, check the `MimeType` field in the `.desktop` file. On Windows, check `HKEY_CLASSES_ROOT\ccswitch` in the registry.
+</Note>
+
+## Common parameters
+
+These parameters apply to all resource types:
+
+<ParamField query="resource" type="string" required>
+  Resource type to import. One of: `provider`, `mcp`, `prompt`, `skill`.
+</ParamField>
+
+<ParamField query="app" type="string" required>
+  Target app. One of: `claude`, `codex`, `gemini`, `opencode`, `openclaw`. For `mcp` resources, use the `apps` parameter instead.
+</ParamField>
+
+<ParamField query="name" type="string" required>
+  Display name for the imported resource.
+</ParamField>
+
+## Resource types
+
+<Tabs>
+  <Tab title="provider">
+    Import a provider configuration into one of the supported CLI tools.
+
+    <ParamField query="endpoint" type="string">
+      API endpoint URL. Supports comma-separated multiple URLs for failover candidates.
+    </ParamField>
+
+    <ParamField query="apiKey" type="string">
+      API key for the provider.
+    </ParamField>
+
+    <ParamField query="model" type="string">
+      Default model identifier.
+    </ParamField>
+
+    <ParamField query="haikuModel" type="string">
+      Haiku-tier model override (Claude only).
+    </ParamField>
+
+    <ParamField query="sonnetModel" type="string">
+      Sonnet-tier model override (Claude only).
+    </ParamField>
+
+    <ParamField query="opusModel" type="string">
+      Opus-tier model override (Claude only).
+    </ParamField>
+
+    <ParamField query="config" type="string">
+      Base64-encoded configuration content to merge into the provider.
+    </ParamField>
+
+    <ParamField query="configFormat" type="string">
+      Format of the `config` value. Either `json` or `toml`.
+    </ParamField>
+
+    <ParamField query="configUrl" type="string">
+      URL of a remote configuration file to fetch and merge.
+    </ParamField>
+
+    <ParamField query="homepage" type="string">
+      Provider website URL, displayed in the provider card.
+    </ParamField>
+
+    <ParamField query="icon" type="string">
+      Icon URL for the provider card.
+    </ParamField>
+
+    <ParamField query="notes" type="string">
+      Free-text notes attached to the provider.
+    </ParamField>
+
+    <ParamField query="enabled" type="boolean">
+      Whether to activate the provider immediately after import.
+    </ParamField>
+
+    <ParamField query="usageScript" type="string">
+      Custom JavaScript for the usage query panel.
+    </ParamField>
+
+    <ParamField query="usageEnabled" type="boolean" default="true">
+      Whether to enable the usage query feature for this provider.
+    </ParamField>
+
+    <ParamField query="usageApiKey" type="string">
+      API key used specifically for usage queries.
+    </ParamField>
+
+    <ParamField query="usageBaseUrl" type="string">
+      Base URL for usage query requests.
+    </ParamField>
+
+    <ParamField query="usageAccessToken" type="string">
+      Access token for usage query authentication.
+    </ParamField>
+
+    <ParamField query="usageUserId" type="string">
+      User ID for usage query requests.
+    </ParamField>
+
+    <ParamField query="usageAutoInterval" type="number">
+      Automatic usage query interval in minutes.
+    </ParamField>
+
+    **Example:**
+
+    ```
+    ccswitch://v1/import?resource=provider&app=claude&name=My%20Provider&endpoint=https%3A%2F%2Fapi.example.com&apiKey=sk-xxx
+    ```
+  </Tab>
+
+  <Tab title="mcp">
+    Import an MCP server configuration and assign it to one or more apps.
+
+    <ParamField query="apps" type="string" required>
+      Comma-separated list of target apps. Example: `claude,codex,gemini,opencode`.
+    </ParamField>
+
+    <ParamField query="config" type="string" required>
+      MCP server configuration as a URL-encoded JSON object. Example: `{"command":"uvx","args":["mcp-server-fetch"]}`.
+    </ParamField>
+
+    <ParamField query="enabled" type="boolean">
+      Whether to enable the MCP server immediately after import.
+    </ParamField>
+
+    **Example:**
+
+    ```
+    ccswitch://v1/import?resource=mcp&name=mcp-fetch&apps=claude,codex,gemini&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22mcp-server-fetch%22%5D%7D
+    ```
+  </Tab>
+
+  <Tab title="prompt">
+    Import a prompt preset into a specific app's prompt library.
+
+    <ParamField query="content" type="string" required>
+      The prompt text content.
+    </ParamField>
+
+    <ParamField query="description" type="string">
+      Short description of the prompt's purpose.
+    </ParamField>
+
+    <ParamField query="enabled" type="boolean">
+      Whether to activate the prompt immediately after import.
+    </ParamField>
+
+    **Example:**
+
+    ```
+    ccswitch://v1/import?resource=prompt&app=claude&name=Code%20Review&content=%23%20Role%0AYou%20are%20an%20expert%20code%20reviewer.
+    ```
+  </Tab>
+
+  <Tab title="skill">
+    Install a skill from a GitHub repository.
+
+    <ParamField query="repo" type="string" required>
+      GitHub repository in `owner/name` format. Example: `myorg/my-skill`.
+    </ParamField>
+
+    <ParamField query="directory" type="string">
+      Path to the skill directory within the repository. Omit to use the repository root.
+    </ParamField>
+
+    <ParamField query="branch" type="string">
+      Git branch to install from. Defaults to the repository's default branch.
+    </ParamField>
+
+    **Example:**
+
+    ```
+    ccswitch://v1/import?resource=skill&name=my-skill&repo=owner/repo&directory=skills/my-skill&branch=main
+    ```
+  </Tab>
+</Tabs>
+
+## Generating links programmatically
+
+Use the `URLSearchParams` API to build correctly encoded deep links in JavaScript:
+
+```javascript
+// Build a provider deep link
+const params = new URLSearchParams({
+  resource: 'provider',
+  app: 'claude',
+  name: 'My Provider',
+  endpoint: 'https://api.example.com',
+  apiKey: 'sk-xxx',
+});
+
+const url = `ccswitch://v1/import?${params.toString()}`;
+console.log(url);
+// ccswitch://v1/import?resource=provider&app=claude&name=My+Provider&...
+```
+
+```javascript
+// Build an MCP server deep link
+const config = JSON.stringify({
+  command: 'uvx',
+  args: ['mcp-server-fetch'],
+});
+
+const params = new URLSearchParams({
+  resource: 'mcp',
+  name: 'mcp-fetch',
+  apps: 'claude,codex,gemini',
+  config,
+});
+
+const url = `ccswitch://v1/import?${params.toString()}`;
+```
+
+## Online generator
+
+CC Switch provides an online tool that builds deep links through a form interface without writing any code:
+
+**[https://farion1231.github.io/cc-switch/deplink.html](https://farion1231.github.io/cc-switch/deplink.html)**
+
+Open the URL, select the resource type, fill in the fields, and click **Generate Link** to get a ready-to-share deep link.
+
+## Import flow
+
+When you click a `ccswitch://` link:
+
+<Steps>
+  <Step title="System prompt">
+    Your operating system asks whether to open CC Switch. Confirm to proceed.
+  </Step>
+  <Step title="CC Switch opens">
+    If CC Switch is in Lightweight Mode, the main window is rebuilt on demand. The first open after Lightweight Mode is slightly slower than usual.
+  </Step>
+  <Step title="Confirmation dialog">
+    CC Switch displays an import confirmation dialog showing the resource type, a configuration preview, and **Confirm** / **Cancel** buttons.
+  </Step>
+  <Step title="Import applied">
+    After you confirm, the resource is added to the CC Switch database and written to the relevant CLI tool's config file.
+  </Step>
+</Steps>
+
+## Security considerations
+
+<Warning>
+  Deep links can contain sensitive information such as API keys. Do not share links that include `apiKey` or other credentials in public channels, documentation, or version control. Use the `configUrl` parameter to reference credentials stored separately, or remove key values before sharing.
+</Warning>
+
+Before applying an import, CC Switch validates:
+
+- The data format is well-formed
+- All required fields for the resource type are present
+- Configuration values are within expected ranges
+
+Only import configurations from sources you trust. CC Switch always shows a preview before applying any deep link.
+
+## Troubleshooting
+
+**Link won't open** — Verify CC Switch is installed and the protocol is registered. On macOS, reinstall the app or run `/usr/bin/open -a "CC Switch" --args --register-protocol`. On Windows, check the `HKEY_CLASSES_ROOT\ccswitch` registry key.
+
+**Import fails with a format error** — Check that any JSON in the `config` parameter is valid before URL-encoding it. Check that any Base64 in the `config` parameter is correctly encoded.
+
+**Missing required fields** — Each resource type has its own required parameters. Refer to the tables above to confirm all required fields are included.

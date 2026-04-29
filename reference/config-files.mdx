@@ -1,0 +1,306 @@
+---
+title: 'CC Switch storage and CLI configuration file reference'
+description: 'Every file CC Switch reads and writes — its own SQLite database and settings, plus the config files it manages for each supported CLI tool.'
+---
+
+CC Switch maintains two separate storage layers: its own data directory at `~/.cc-switch/` (which holds the database, device settings, backups, and skills), and the configuration files that belong to each CLI tool it manages. This page documents every file in both layers so you know exactly what CC Switch reads, what it writes, and what you can safely edit by hand.
+
+## CC Switch storage
+
+### Directory layout
+
+```
+~/.cc-switch/
+├── cc-switch.db          # SQLite database (single source of truth)
+├── settings.json         # Device-level UI preferences
+├── backups/              # Auto-rotated database backups (keeps 10 most recent)
+├── skills/               # Installed skills (symlinked to app directories by default)
+├── skill-backups/        # Pre-uninstall skill backups (keeps 20 most recent)
+└── env-backups/          # Backups of removed environment variables
+```
+
+### cc-switch.db
+
+The SQLite database is the single source of truth (SSOT) for all syncable data. CC Switch uses atomic writes (temp file + rename) and a mutex-protected connection to prevent corruption.
+
+| Table | Contents |
+|-------|----------|
+| `providers` | Provider configurations |
+| `provider_endpoints` | Endpoint candidate list for failover |
+| `mcp_servers` | MCP server configurations |
+| `prompts` | Prompt presets |
+| `skills` | Skill installation status |
+| `skill_repos` | Skill repository configurations |
+| `proxy_config` | Proxy configuration |
+| `proxy_request_logs` | Proxy request logs |
+| `provider_health` | Provider health status |
+| `model_pricing` | Model pricing overrides |
+| `settings` | In-database app settings |
+
+<Warning>
+  Do not edit `cc-switch.db` directly. Manual edits bypass atomic write protection and can corrupt the database. Use CC Switch's UI or the export/import feature to manage data.
+</Warning>
+
+### settings.json
+
+Device-level preferences stored separately from the database. This file is not synced across devices.
+
+```json
+{
+  "language": "zh",
+  "theme": "system",
+  "windowBehavior": "minimize",
+  "autoStart": false,
+  "claudeConfigDir": null,
+  "codexConfigDir": null,
+  "geminiConfigDir": null,
+  "opencodeConfigDir": null,
+  "openclawConfigDir": null
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `language` | UI language: `zh`, `en`, or `ja` |
+| `theme` | Color theme: `system`, `light`, or `dark` |
+| `windowBehavior` | Close button behavior: `minimize` (to tray) or `exit` |
+| `autoStart` | Launch CC Switch on system startup |
+| `claudeConfigDir` | Custom path for Claude Code's config directory (null = use default `~/.claude/`) |
+| `codexConfigDir` | Custom path for Codex's config directory (null = use default `~/.codex/`) |
+| `geminiConfigDir` | Custom path for Gemini CLI's config directory (null = use default `~/.gemini/`) |
+| `opencodeConfigDir` | Custom path for OpenCode's config directory (null = use default `~/.opencode/`) |
+| `openclawConfigDir` | Custom path for OpenClaw's config directory (null = use default `~/.openclaw/`) |
+
+`settings.json` is safe to edit manually. Changes take effect the next time you open CC Switch. To reset all UI preferences, delete the file.
+
+### backups/
+
+Automatic database backups. CC Switch creates a backup before each configuration import and on a configurable schedule (default: every 24 hours). The retention count defaults to 10. Backup file names include timestamps, for example: `db_backup_20260315_143000`.
+
+You can manage backups from **Settings** → **Advanced** → **Backup & Restore**.
+
+### skills/
+
+The CC Switch skills directory is the source of truth for installed skills. By default, CC Switch creates symlinks from each app's skills directory to files in this folder, so a single copy of a skill is shared across all apps that have it installed. You can switch to file copy mode in **Settings** → **Skill Sync Method**.
+
+### skill-backups/
+
+When you uninstall a skill, CC Switch copies the skill files here before removing them. The 20 most recent skill backups are kept.
+
+---
+
+## CLI tool configuration files
+
+CC Switch writes to each CLI tool's configuration files when you switch providers. It uses a backfill mechanism: when you edit the currently active provider in CC Switch, it reads the live config files to pick up any manual changes you may have made, then saves them back to the database.
+
+### Claude Code
+
+**Default config directory:** `~/.claude/`
+
+```
+~/.claude/
+├── settings.json     # Provider credentials and environment
+├── CLAUDE.md         # System prompt (managed by Prompts panel)
+└── skills/           # Symlinked skills (managed by Skills panel)
+```
+
+**`~/.claude/settings.json`** — CC Switch writes the `env` section when you switch providers:
+
+```json
+{
+  "env": {
+    "ANTHROPIC_API_KEY": "sk-ant-xxx",
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com"
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `env.ANTHROPIC_API_KEY` | API key passed to Claude Code |
+| `env.ANTHROPIC_BASE_URL` | API endpoint URL (omitted when using the official endpoint) |
+| `env.ANTHROPIC_AUTH_TOKEN` | Alternative authentication token (used instead of `ANTHROPIC_API_KEY` for some providers) |
+
+**`~/.claude.json`** — MCP server configuration (managed by the MCP panel):
+
+```json
+{
+  "mcpServers": {
+    "mcp-fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    }
+  }
+}
+```
+
+### Codex
+
+**Default config directory:** `~/.codex/`
+
+```
+~/.codex/
+├── auth.json         # API key
+├── config.toml       # Endpoint, model, and MCP servers
+└── AGENTS.md         # System prompt (managed by Prompts panel)
+```
+
+**`~/.codex/auth.json`**:
+
+```json
+{
+  "OPENAI_API_KEY": "sk-xxx"
+}
+```
+
+**`~/.codex/config.toml`** — CC Switch writes `base_url` and `model` when you switch providers. MCP servers are written to the `[mcp_servers]` section:
+
+```toml
+base_url = "https://api.openai.com/v1"
+model = "gpt-4"
+
+[mcp_servers.mcp-fetch]
+command = "uvx"
+args = ["mcp-server-fetch"]
+```
+
+| Field | Description |
+|-------|-------------|
+| `base_url` | API endpoint URL |
+| `model` | Default model identifier |
+| `[mcp_servers.*]` | MCP server entries (managed by the MCP panel) |
+
+### Gemini CLI
+
+**Default config directory:** `~/.gemini/`
+
+```
+~/.gemini/
+├── .env              # API key and endpoint
+├── settings.json     # MCP servers
+└── GEMINI.md         # System prompt (managed by Prompts panel)
+```
+
+**`~/.gemini/.env`** — CC Switch writes the API key and endpoint here:
+
+```bash
+GEMINI_API_KEY=xxx
+GOOGLE_GEMINI_BASE_URL=https://generativelanguage.googleapis.com
+GEMINI_MODEL=gemini-pro
+```
+
+**`~/.gemini/settings.json`** — MCP server configuration (managed by the MCP panel):
+
+```json
+{
+  "mcpServers": {
+    "mcp-fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    }
+  }
+}
+```
+
+### OpenCode
+
+**Default config directory:** `~/.opencode/`
+
+```
+~/.opencode/
+├── config.json       # Main configuration
+├── AGENTS.md         # System prompt (managed by Prompts panel)
+└── skills/           # Symlinked skills (managed by Skills panel)
+```
+
+CC Switch writes provider credentials and endpoint to `config.json` when you switch providers.
+
+### OpenClaw
+
+**Default config directory:** `~/.openclaw/`
+
+```
+~/.openclaw/
+├── openclaw.json     # Main configuration (JSON5 format)
+├── AGENTS.md         # System prompt (managed by Prompts panel)
+└── skills/           # Symlinked skills (managed by Skills panel)
+```
+
+**`~/.openclaw/openclaw.json`** — OpenClaw uses JSON5 format. CC Switch writes to the `models.providers` section when you switch providers:
+
+```json5
+{
+  // Model provider configuration
+  models: {
+    mode: "merge",
+    providers: {
+      "custom-provider": {
+        baseUrl: "https://api.example.com/v1",
+        apiKey: "your-api-key",
+        api: "openai-completions",
+        models: [{ id: "model-id", name: "Model Name" }]
+      }
+    }
+  },
+  // Environment variables
+  env: {
+    ANTHROPIC_API_KEY: "sk-..."
+  },
+  // Agent default model configuration
+  agents: {
+    defaults: {
+      model: {
+        primary: "provider/model"
+      }
+    }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `models.providers` | Provider entries, mapped to CC Switch providers |
+| `env` | Environment variables passed to agent processes |
+| `agents.defaults` | Default model selection for agents |
+
+---
+
+## Environment variable conflicts
+
+CC Switch detects when system environment variables conflict with the credentials it writes to config files. Environment variables take priority over config file values, so if you have `ANTHROPIC_BASE_URL` set in your shell, Claude Code will use that value instead of the one CC Switch wrote.
+
+The following variables are monitored:
+
+| Variable | Affects |
+|----------|---------|
+| `ANTHROPIC_API_KEY` | Claude Code API key |
+| `ANTHROPIC_BASE_URL` | Claude Code API endpoint |
+| `ANTHROPIC_AUTH_TOKEN` | Claude Code auth token |
+| `OPENAI_API_KEY` | Codex API key |
+| `GEMINI_API_KEY` | Gemini CLI API key |
+| `GOOGLE_GEMINI_BASE_URL` | Gemini CLI API endpoint |
+
+When a conflict is detected, a yellow warning banner appears at the top of the CC Switch interface. Click **Expand** to see which variables are conflicting and where they are defined (shell config file, user registry, system registry, or system environment).
+
+### Resolving conflicts
+
+**Using CC Switch:** Select the conflicting variables in the conflict panel and click **Remove Selected**. CC Switch backs up the variable values to `~/.cc-switch/env-backups/` before removal.
+
+**Manually on macOS / Linux:** Edit your shell configuration file (for example `~/.zshrc` or `~/.bashrc`), remove or comment out the `export` statements for the conflicting variables, then run `source ~/.zshrc` to reload.
+
+**Manually on Windows:** Open **System Properties** → **Advanced** → **Environment Variables**, find the variable in the User or System list, and delete or modify it.
+
+If you accidentally remove a variable, find the backup JSON file in `~/.cc-switch/env-backups/` and manually restore the value.
+
+---
+
+## Manual editing guidelines
+
+| File | Safe to edit manually? |
+|------|----------------------|
+| CLI tool config files (`~/.claude/settings.json`, `~/.codex/config.toml`, etc.) | Yes — CC Switch backfills changes when you next edit the active provider |
+| `~/.cc-switch/settings.json` | Yes |
+| `~/.cc-switch/cc-switch.db` | No |
+| Backup files | No |
+
+If you manually edit a CLI tool's config file, open CC Switch and edit the corresponding provider. CC Switch will read your changes back from the live file. Save the provider to write them into the database.

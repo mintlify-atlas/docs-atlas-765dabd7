@@ -1,0 +1,101 @@
+---
+title: 'Create and manage reusable AI system prompt presets'
+description: 'Write Markdown-based system prompt presets in CC Switch and instantly activate them across Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw.'
+---
+
+System prompts shape how an AI coding tool behaves — its persona, focus areas, and response style. CC Switch lets you maintain a library of Markdown-based prompt presets and switch between them with a single click, syncing the active preset to every supported app's config file automatically.
+
+## Creating a preset
+
+<Steps>
+  <Step title="Open the Prompts panel">
+    Click the **Prompts** button in the top navigation bar.
+  </Step>
+  <Step title="Click the + button">
+    Click the **+** button in the top-right corner to open the preset editor.
+  </Step>
+  <Step title="Enter a name">
+    Give the preset a clear, descriptive name (e.g., "Code Reviewer", "Security Auditor").
+  </Step>
+  <Step title="Write your prompt in the Markdown editor">
+    Use the built-in editor to compose your system prompt. Structure it with Markdown headings, lists, and emphasis to make it easy for the model to parse.
+  </Step>
+  <Step title="Save and activate">
+    Click **Save** to store the preset. Then toggle the switch on the preset card to activate it — CC Switch immediately writes the prompt to the active app's config file.
+  </Step>
+</Steps>
+
+<Tip>
+The Markdown editor provides syntax highlighting, a live preview pane, and common format shortcuts. Use Markdown structure — headings for sections, bullet lists for capabilities, and emphasis for constraints — to help the model interpret your prompt reliably.
+
+Example of a well-structured preset:
+
+```markdown
+# Role Definition
+
+You are a professional code review expert.
+
+## Core Capabilities
+
+- Code quality analysis
+- Performance optimization suggestions
+- Security vulnerability detection
+
+## Response Style
+
+- Clear and concise
+- Provide specific examples
+- Give improvement suggestions
+
+## Notes
+
+- Do not modify business logic
+- Maintain consistent code style
+```
+</Tip>
+
+## Activating a preset
+
+Click the toggle on any preset card to activate it. Only one preset can be active at a time — activating a new preset automatically deactivates the previous one.
+
+When a preset is activated, CC Switch writes its content to the corresponding file for the currently selected app:
+
+| App | Target file |
+|---|---|
+| Claude Code | `~/.claude/CLAUDE.md` |
+| Codex | `~/.codex/AGENTS.md` |
+| Gemini CLI | `~/.gemini/GEMINI.md` |
+| OpenCode | `~/.opencode/AGENTS.md` |
+| OpenClaw | `~/.openclaw/AGENTS.md` |
+
+Each app maintains its own independent set of presets. When you switch the active app in CC Switch, the Prompts panel shows that app's presets.
+
+## Smart backfill protection
+
+CC Switch includes a backfill mechanism to prevent you from losing manual edits made directly in a CLI tool.
+
+Whenever you switch the active preset, CC Switch first reads the current content of the live config file (e.g., `CLAUDE.md`) and compares it to the stored preset. If the content differs — meaning you edited the file directly outside CC Switch — the live content is automatically saved back to the current preset before the switch happens.
+
+| Scenario | What CC Switch does |
+|---|---|
+| You edited `CLAUDE.md` directly in your editor | Saves those changes to the current preset before switching |
+| You modified the file with an external tool | Changes are captured automatically |
+| You switch to a new preset | Current live content is saved first, then the new preset is written |
+
+Backfill only fires when switching away from an active preset. If no preset is currently active, backfill does not run. A backfill failure does not block the switch.
+
+## Editing and deleting presets
+
+**To edit** — click the **Edit** button on a preset card, update the name or content in the Markdown editor, and click **Save**. If the preset is currently active, changes are written to the live config file immediately.
+
+**To delete** — click the **Delete** button and confirm. Active presets cannot be deleted; deactivate the preset first.
+
+## Sharing presets via Deep Link
+
+You can share a preset with others using a CC Switch deep link following the V1 protocol:
+
+```
+ccswitch://v1/import?resource=prompt&app=claude&name=My%20Preset&content=<url-encoded-content>
+```
+
+See [Deep Link protocol reference](/reference/deep-link) for the full parameter list and a JavaScript code generator example. Exporting your full CC Switch configuration also includes all prompt presets, which are restored when the configuration is imported on another machine.

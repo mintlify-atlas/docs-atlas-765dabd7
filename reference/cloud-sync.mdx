@@ -1,0 +1,122 @@
+---
+title: 'Sync CC Switch data across devices with cloud storage'
+description: 'Keep providers, MCP servers, prompts, and skills in sync across all your machines using Dropbox, OneDrive, iCloud, or a WebDAV server.'
+---
+
+CC Switch stores all its configuration data in a single SQLite database at `~/.cc-switch/cc-switch.db`. Because that file is self-contained, you can sync it across devices using any cloud storage service that can mirror a local folder, or by using the built-in WebDAV sync feature. This page explains what gets synced, what stays local, and how to set up each method.
+
+## What syncs and what doesn't
+
+| Data | Syncs? | Location |
+|------|--------|----------|
+| Providers | Yes | `cc-switch.db` |
+| MCP server configurations | Yes | `cc-switch.db` |
+| Prompt presets | Yes | `cc-switch.db` |
+| Skills and skill repositories | Yes | `cc-switch.db` |
+| Proxy configuration | Yes | `cc-switch.db` |
+| Language, theme, window behavior | No | `settings.json` |
+| App config directory overrides | No | `settings.json` |
+| Auto-start setting | No | `settings.json` |
+
+`settings.json` holds device-level UI preferences that are intentionally not synced. Each machine keeps its own independent copy.
+
+<Warning>
+  Never write to the CC Switch database from two devices at the same time. SQLite does not support concurrent multi-writer access. If both devices modify the file simultaneously, one set of changes will be overwritten or the database may become corrupted. Always finish work on one machine, sync, and then open CC Switch on the other machine.
+</Warning>
+
+## Sync methods
+
+<Tabs>
+  <Tab title="Cloud storage folder (Dropbox, OneDrive, iCloud)">
+    The simplest approach is to move CC Switch's data directory into a folder that your cloud storage client already syncs. CC Switch reads and writes all data relative to its configured data directory, so pointing it at a Dropbox or OneDrive folder gives you automatic sync without any additional setup.
+
+    <Steps>
+      <Step title="Create a folder in your cloud storage">
+        In Dropbox, OneDrive, or iCloud Drive, create a dedicated folder for CC Switch. For example:
+
+        ```
+        ~/Dropbox/Apps/cc-switch/
+        ~/OneDrive/Apps/cc-switch/
+        ~/Library/Mobile Documents/com~apple~CloudDocs/cc-switch/
+        ```
+      </Step>
+
+      <Step title="Change the CC Switch data directory">
+        Open CC Switch, go to **Settings** → **Advanced** → **Configuration Directories**, and set **App Configuration Directory** to the folder you created.
+      </Step>
+
+      <Step title="Restart CC Switch">
+        Quit and relaunch CC Switch. It will create `cc-switch.db` and `settings.json` in the new location and use that directory going forward.
+      </Step>
+
+      <Step title="Set up the same path on your other devices">
+        On each additional machine, install CC Switch and configure the same **App Configuration Directory** to point at the synced folder for that platform. For example, on a second Mac the iCloud path resolves to the same folder once iCloud Drive is signed in.
+      </Step>
+    </Steps>
+
+    <Note>
+      Let your cloud storage client finish syncing before opening CC Switch on another machine. Most clients show a sync status indicator in the menu bar or taskbar.
+    </Note>
+  </Tab>
+
+  <Tab title="WebDAV server">
+    CC Switch has a built-in WebDAV sync panel that uploads and downloads the database on demand, or automatically at a configured interval. This works with Nextcloud, Synology NAS, Jianguoyun (坚果云), and any other WebDAV-compatible server.
+
+    WebDAV sync uses the v2 protocol with dual-layer versioning. Before any download, CC Switch displays the remote snapshot's protocol version, database compatibility version, timestamp, and file size so you can confirm you're downloading the correct data.
+
+    <Steps>
+      <Step title="Open the WebDAV settings">
+        Go to **Settings** → **Advanced** → **Cloud Sync (WebDAV)**.
+      </Step>
+
+      <Step title="Configure the connection">
+        Fill in the connection details:
+
+        | Field | Description |
+        |-------|-------------|
+        | **Service Preset** | Select Jianguoyun, Nextcloud, Synology, or Custom |
+        | **Server URL** | Your WebDAV server URL |
+        | **Username** | Your login username |
+        | **Password** | Your password or app-specific password |
+        | **Remote Directory** | Remote path for sync files (default: `cc-switch-sync`) |
+        | **Profile Name** | Device identifier (default: `default`) |
+
+        Then click **Test Connection** to verify the credentials before saving.
+      </Step>
+
+      <Step title="Upload from your primary device">
+        On the device that has your current configuration, click **Upload** to push the local database to the WebDAV server.
+      </Step>
+
+      <Step title="Download on your other devices">
+        On each additional machine, configure the same WebDAV connection, then click **Download**. CC Switch will show the remote snapshot details before asking you to confirm. A safety backup of the local database is created automatically before the download overwrites it.
+      </Step>
+
+      <Step title="Enable auto-sync (optional)">
+        Toggle **Auto Sync** on and choose an interval. CC Switch will automatically upload the database to WebDAV at that interval. A confirmation dialog appears on first activation.
+      </Step>
+    </Steps>
+
+    <Note>
+      Upload overwrites remote data. Download overwrites local data. CC Switch always creates a safety backup before a download, so you can recover the previous state from **Settings** → **Advanced** → **Backup & Restore** if needed.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Backup and recovery
+
+Regardless of which sync method you use, CC Switch maintains its own automatic backup rotation in `~/.cc-switch/backups/` (or the equivalent path inside your custom data directory). Backups are created before each configuration import and on a configurable schedule (default: every 24 hours, keeping the 10 most recent). You can manage backups from **Settings** → **Advanced** → **Backup & Restore**.
+
+If a sync conflict corrupts the database, restore from the most recent backup:
+
+<Steps>
+  <Step title="Open backup management">
+    Go to **Settings** → **Advanced** → **Backup & Restore**.
+  </Step>
+  <Step title="Select a backup">
+    Choose the most recent backup from the list. The panel shows each backup's display name, creation time, and file size.
+  </Step>
+  <Step title="Restore">
+    Click **Restore**. CC Switch creates a safety backup of the current (corrupted) database before overwriting it, then restores the selected backup.
+  </Step>
+</Steps>

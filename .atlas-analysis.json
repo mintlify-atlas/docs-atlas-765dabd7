@@ -1,0 +1,80 @@
+{
+  "projectType": "saas",
+  "projectName": "CC Switch",
+  "projectDescription": "A cross-platform desktop app that unifies provider management, MCP servers, Skills, Sessions, and proxy failover for Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw.",
+  "theme": "palm",
+  "primaryColor": "#848c8e",
+  "lightColor": "#11161e",
+  "darkColor": "#cfd0d2",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Provider Management",
+            "pages": [
+              "providers/overview",
+              "providers/add-provider",
+              "providers/switch-provider",
+              "providers/usage-query"
+            ]
+          },
+          {
+            "group": "Extensions",
+            "pages": [
+              "extensions/mcp-servers",
+              "extensions/prompts",
+              "extensions/skills",
+              "extensions/sessions"
+            ]
+          },
+          {
+            "group": "Proxy & High Availability",
+            "pages": [
+              "proxy/proxy-service",
+              "proxy/failover",
+              "proxy/usage-statistics"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/deep-link",
+              "reference/cloud-sync",
+              "reference/config-files",
+              "reference/faq"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "One-click provider switching for Claude Code, Codex, Gemini CLI, OpenCode, and OpenClaw",
+    "50+ built-in provider presets including AWS Bedrock, NVIDIA NIM, and community relays",
+    "Unified MCP server management with bidirectional sync across all apps",
+    "Skills management with one-click install from GitHub repos or ZIP files",
+    "Local proxy with auto-failover, circuit breaker, and API format conversion",
+    "Usage dashboard with token tracking, cost estimation, and request logs",
+    "System tray quick switching without opening the full app",
+    "Cloud sync via Dropbox, OneDrive, iCloud, or WebDAV",
+    "Deep Link (ccswitch://) protocol for one-click configuration sharing",
+    "Session Manager to browse and restore conversation history across all apps"
+  ],
+  "publicApiSurface": [
+    "ccswitch://v1/import (Deep Link protocol for provider/MCP/prompt/skill import)",
+    "Local proxy HTTP endpoint at http://127.0.0.1:15721",
+    "SQLite database at ~/.cc-switch/cc-switch.db",
+    "Settings JSON at ~/.cc-switch/settings.json",
+    "Tauri IPC commands: provider, mcp, skill, prompt, proxy, session_manager, usage, deeplink, settings, sync"
+  ]
+}

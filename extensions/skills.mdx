@@ -1,0 +1,135 @@
+---
+title: 'Install and manage AI coding Skill extensions in CC Switch'
+description: 'Browse, install, and update reusable Skill packages from GitHub repos or ZIP files, synced automatically to Claude Code, Codex, Gemini CLI, and OpenCode.'
+---
+
+Skills are reusable capability extensions that give AI coding tools specialized abilities in a specific domain. Each Skill is a folder containing prompt templates, tool definitions, and example code. CC Switch manages Skills from a central store at `~/.cc-switch/skills/` and distributes them to each supported app's directory, so you install once and all your tools benefit.
+
+Skills are supported for Claude Code, Codex, Gemini CLI, and OpenCode.
+
+## Discovering Skills
+
+Open the **Skills** panel by clicking the **Skills** button in the top navigation bar.
+
+CC Switch comes pre-configured with several GitHub repositories including the Anthropic official Skills collection, ComposioHQ, and curated community picks. Browse the cards in the panel to explore available Skills.
+
+### Search and filter
+
+- **Search box** — filter by name, description, or directory name in real time.
+- **Status filter** — show All, Installed only, or Not Installed only.
+- Search and filter can be combined: select "Installed" then type a keyword to find a specific installed Skill.
+
+### skills.sh public registry
+
+CC Switch integrates the **skills.sh** public registry so you can discover community Skills without leaving the app.
+
+1. Click **Repository Management** to open the dialog.
+2. Use the **skills.sh Search** input to filter by keyword in real time.
+3. Click any result to add that repository to your repository list.
+
+## Installing a Skill
+
+<Tabs>
+  <Tab title="From GitHub">
+    <Steps>
+      <Step title="Open the Skills panel">
+        Click **Skills** in the top navigation bar.
+      </Step>
+      <Step title="Find the skill card">
+        Browse or search for the Skill you want. Each card shows the name, description, source repository, and installation status.
+      </Step>
+      <Step title="Click Install">
+        Click the **Install** button on the card and wait for the download to complete. The card status updates to Installed automatically.
+      </Step>
+      <Step title="Verify installation">
+        The Skill folder is placed in `~/.cc-switch/skills/` (the SSOT store) and linked or copied to each enabled app's skills directory:
+
+        | App | Skills directory |
+        |---|---|
+        | Claude Code | `~/.claude/skills/` |
+        | Codex | `~/.codex/skills/` |
+        | Gemini CLI | `~/.gemini/skills/` |
+        | OpenCode | `~/.opencode/skills/` |
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="From ZIP file">
+    <Steps>
+      <Step title="Open the Skills panel">
+        Click **Skills** in the top navigation bar.
+      </Step>
+      <Step title="Open the install options">
+        Click the install menu or ZIP import button in the panel toolbar.
+      </Step>
+      <Step title="Select your ZIP file">
+        Choose the ZIP archive that contains the Skill folder(s). CC Switch extracts the contents and registers each valid Skill it finds.
+      </Step>
+      <Step title="Confirm installation">
+        The imported Skills appear in the panel and are distributed to the current app's skills directory immediately.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Storage location
+
+By default, CC Switch stores the source copy of every Skill at `~/.cc-switch/skills/`. Starting in v3.13.0 you can switch the source storage to `~/.agents/skills/` — a shared directory that follows community agent tool conventions and works better for cross-tool collaboration.
+
+To switch: open the storage location setting in the Skills panel management menu and select the target location. CC Switch migrates existing Skills to the new location without losing any state.
+
+<Note>
+The **storage location** setting controls where CC Switch keeps the authoritative source copy of each Skill. A separate setting — **Skill Sync Method** in Personalization — controls whether Skills are distributed to each app's directory via symlink or file copy. Both settings work together.
+</Note>
+
+## Adding custom repositories
+
+<Steps>
+  <Step title="Open Repository Management">
+    Click the **Repository Management** button at the top of the Skills panel.
+  </Step>
+  <Step title="Click Add Repository">
+    Fill in the repository details:
+
+    | Field | Description |
+    |---|---|
+    | Owner | GitHub username or organization name |
+    | Name | Repository name |
+    | Branch | Branch to fetch from (default: `main`) |
+    | Subdirectory | Path within the repo containing Skills (optional) |
+  </Step>
+  <Step title="Click Add">
+    CC Switch fetches the repository index. New Skills from that repository appear in the panel after the next refresh.
+  </Step>
+</Steps>
+
+Repository URLs follow the pattern:
+
+```
+https://github.com/{owner}/{name}/tree/{branch}/{subdirectory}
+```
+
+To remove a repository, find it in the repository list and click **Delete**. Already-installed Skills from a deleted repository remain installed but can no longer receive updates.
+
+## Updating Skills
+
+Starting in v3.13.0, CC Switch detects available updates using **SHA-256 content hashes**. When the remote repository has any content changes, the affected Skill card shows an "Update available" indicator.
+
+**Single update** — click the **Update** button on an individual card.
+
+**Batch update** — when multiple Skills have pending updates, the **Update All** button appears at the top of the panel. Click it to download all updates in one operation. The panel refreshes automatically when finished.
+
+<Tip>
+Click **Refresh** regularly to trigger a remote scan and keep update detection current. Update indicators only appear after a scan.
+</Tip>
+
+## Uninstalling Skills and backups
+
+Click **Uninstall** on a Skill card and confirm the dialog. Before removal, CC Switch automatically backs up the Skill folder to `~/.cc-switch/skill-backups/`. The Skill is then removed from all app directories and the source store.
+
+**To restore a backup:**
+
+1. Click **Restore from Backup** in the Skills panel.
+2. Select the entry you want (shows skill name and backup date).
+3. The Skill is restored and enabled for the current app.
+
+**To delete a backup:** open the restore dialog, find the entry, click **Delete**, and confirm. Backup deletion cannot be undone.
